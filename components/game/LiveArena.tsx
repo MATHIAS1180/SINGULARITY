@@ -1,49 +1,65 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { 
   Zap, 
   TrendingUp, 
-  TrendingDown, 
   Users, 
   Target,
   Activity,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
-
-interface ArenaMetrics {
-  totalExposed: number;
-  totalValueLocked: number;
-  activePlayers: number;
-  averageExposure: number;
-  cycleProgress: number;
-  tension: 'low' | 'medium' | 'high' | 'extreme';
-}
+import { useGameState } from '@/lib/hooks';
+import { bnToSol } from '@/lib/anchor';
+import { useEffect, useState } from 'react';
 
 export function LiveArena() {
-  // Mock data - replace with real data from API/WebSocket
-  const [metrics, setMetrics] = useState<ArenaMetrics>({
+  const { data: gameState, isLoading } = useGameState();
+  const [cycleProgress, setCycleProgress] = useState(0);
+
+  // Calculate cycle progress
+  useEffect(() => {
+    if (!gameState) return;
+
+    const currentSlot = Date.now() / 400; // Approximate current slot
+    const elapsed = currentSlot - gameState.cycleStartSlot.toNumber();
+    const total = gameState.cycleEndSlot.toNumber() - gameState.cycleStartSlot.toNumber();
+    const progress = Math.min(Math.max((elapsed / total) * 100, 0), 100);
+    
+    setCycleProgress(progress);
+  }, [gameState]);
+
+  // Calculate metrics from blockchain data
+  const metrics = gameState ? {
+    totalExposed: bnToSol(gameState.totalExposedValue),
+    totalValueLocked: bnToSol(gameState.totalValueLocked),
+    activePlayers: gameState.activePlayers,
+    averageExposure: gameState.totalValueLocked.toNumber() > 0 
+      ? (gameState.totalExposedValue.toNumber() / gameState.totalValueLocked.toNumber()) * 100 
+      : 0,
+    cycleProgress,
+    tension: cycleProgress > 75 ? 'extreme' as const : 
+             cycleProgress > 50 ? 'high' as const : 
+             cycleProgress > 25 ? 'medium' as const : 
+             'low' as const,
+  } : {
     totalExposed: 0,
     totalValueLocked: 0,
     activePlayers: 0,
     averageExposure: 0,
     cycleProgress: 0,
-    tension: 'low',
-  });
+    tension: 'low' as const,
+  };
 
-  // Simulate live updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        ...prev,
-        cycleProgress: Math.min(prev.cycleProgress + 1, 100),
-        tension: prev.cycleProgress > 75 ? 'extreme' : prev.cycleProgress > 50 ? 'high' : prev.cycleProgress > 25 ? 'medium' : 'low',
-      }));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  if (isLoading) {
+    return (
+      <GlassPanel className="p-6 text-center space-y-4">
+        <Loader2 className="w-12 h-12 text-purple-400 mx-auto animate-spin" />
+        <p className="text-gray-400 text-sm">Loading arena data...</p>
+      </GlassPanel>
+    );
+  }
 
   const getTensionColor = () => {
     switch (metrics.tension) {

@@ -2,17 +2,21 @@
 
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Wallet, TrendingUp, TrendingDown, Clock, Users, Target } from 'lucide-react';
+import { Wallet, TrendingUp, Clock, Users, Target, Loader2 } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { StatCard } from '@/components/ui/StatCard';
-import { ExposureSlider } from '@/components/ui/ExposureSlider';
 import { LiveArena } from '@/components/game/LiveArena';
 import { PlayerPanel } from '@/components/game/PlayerPanel';
+import { PlayerActions } from '@/components/game/PlayerActions';
 import { CycleTimeline } from '@/components/game/CycleTimeline';
 import { LeaderboardPreview } from '@/components/game/LeaderboardPreview';
+import { usePlayerState, useGameState } from '@/lib/hooks';
+import { bnToSol } from '@/lib/anchor';
 
 export default function DashboardPage() {
   const { connected, publicKey } = useWallet();
+  const { data: playerState, isLoading: playerLoading } = usePlayerState();
+  const { data: gameState, isLoading: gameLoading } = useGameState();
 
   // If wallet not connected, show connect prompt
   if (!connected) {
@@ -53,27 +57,31 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Loading State */}
+      {(playerLoading || gameLoading) && (
+        <GlassPanel className="p-6 text-center">
+          <Loader2 className="w-8 h-8 text-purple-400 mx-auto animate-spin mb-2" />
+          <p className="text-gray-400">Loading blockchain data...</p>
+        </GlassPanel>
+      )}
+
       {/* Player Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Balance"
-          value="0 SOL"
+          value={playerState ? `${bnToSol(playerState.balance).toFixed(4)} SOL` : '0 SOL'}
           icon={<Wallet className="w-5 h-5" />}
-          trend="+0%"
-          trendUp={true}
         />
         <StatCard
           label="Current Exposure"
-          value="0%"
+          value={playerState ? `${playerState.exposure}%` : '0%'}
           icon={<Target className="w-5 h-5" />}
-          subtitle="Not participating"
+          subtitle={playerState?.participatingInCycle ? 'Participating' : 'Not participating'}
         />
         <StatCard
           label="Total P&L"
-          value="+0 SOL"
+          value={playerState ? `${(playerState.totalRedistributed.toNumber() / 1e9).toFixed(4)} SOL` : '0 SOL'}
           icon={<TrendingUp className="w-5 h-5" />}
-          trend="+0%"
-          trendUp={true}
         />
         <StatCard
           label="Rank"
@@ -90,35 +98,8 @@ export default function DashboardPage() {
           {/* Player Panel */}
           <PlayerPanel />
 
-          {/* Exposure Control */}
-          <GlassPanel className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Set Exposure</h3>
-              <span className="text-sm text-gray-400">Risk Level</span>
-            </div>
-            <ExposureSlider />
-            <div className="pt-4 space-y-2">
-              <button className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-lg font-semibold transition-all duration-200">
-                Update Exposure
-              </button>
-              <p className="text-xs text-gray-500 text-center">
-                Higher exposure = higher risk & reward
-              </p>
-            </div>
-          </GlassPanel>
-
-          {/* Quick Actions */}
-          <GlassPanel className="p-6 space-y-3">
-            <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-            <button className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition-all duration-200 text-left flex items-center justify-between">
-              <span>Deposit SOL</span>
-              <TrendingUp className="w-4 h-4" />
-            </button>
-            <button className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition-all duration-200 text-left flex items-center justify-between">
-              <span>Withdraw SOL</span>
-              <TrendingDown className="w-4 h-4" />
-            </button>
-          </GlassPanel>
+          {/* Player Actions */}
+          <PlayerActions />
         </div>
 
         {/* Center Column - Live Arena */}
@@ -129,7 +110,7 @@ export default function DashboardPage() {
               <h3 className="text-lg font-semibold text-white">Current Cycle</h3>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <Clock className="w-4 h-4" />
-                <span>Cycle #1</span>
+                <span>Cycle #{gameState?.currentCycle.toString() || '—'}</span>
               </div>
             </div>
             <CycleTimeline />
@@ -149,7 +130,9 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-400">Total Value Locked</p>
-              <p className="text-2xl font-bold text-white mt-1">0 SOL</p>
+              <p className="text-2xl font-bold text-white mt-1">
+                {gameState ? `${bnToSol(gameState.totalValueLocked).toFixed(4)} SOL` : '0 SOL'}
+              </p>
             </div>
             <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-purple-400" />
@@ -161,7 +144,9 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-400">Active Players</p>
-              <p className="text-2xl font-bold text-white mt-1">0</p>
+              <p className="text-2xl font-bold text-white mt-1">
+                {gameState?.activePlayers || 0}
+              </p>
             </div>
             <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
               <Users className="w-6 h-6 text-blue-400" />
@@ -172,8 +157,10 @@ export default function DashboardPage() {
         <GlassPanel className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Cycle Progress</p>
-              <p className="text-2xl font-bold text-white mt-1">0%</p>
+              <p className="text-sm text-gray-400">Cycle Status</p>
+              <p className="text-2xl font-bold text-white mt-1">
+                {gameState?.cycleResolved ? 'Resolved' : 'Active'}
+              </p>
             </div>
             <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center">
               <Clock className="w-6 h-6 text-pink-400" />

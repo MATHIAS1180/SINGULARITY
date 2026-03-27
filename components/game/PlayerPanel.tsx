@@ -9,26 +9,28 @@ import {
   TrendingDown,
   ArrowDownCircle,
   ArrowUpCircle,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
 import { RankBadge } from '../ui/RankBadge';
-
-interface PlayerStats {
-  balance: number;
-  exposure: number;
-  exposedValue: number;
-  score: number;
-  rank: number;
-  totalPnL: number;
-  participating: boolean;
-}
+import { usePlayerState } from '@/lib/hooks';
+import { bnToSol } from '@/lib/anchor';
 
 export function PlayerPanel() {
   const { connected, publicKey } = useWallet();
+  const { data: playerState, isLoading } = usePlayerState();
 
-  // Mock data - replace with real data from API
-  const stats: PlayerStats = {
+  // Calculate stats from blockchain data
+  const stats = playerState ? {
+    balance: bnToSol(playerState.balance),
+    exposure: playerState.exposure,
+    exposedValue: bnToSol(playerState.exposedValue),
+    score: playerState.score.toNumber(),
+    rank: 0, // TODO: Calculate from leaderboard
+    totalPnL: playerState.totalRedistributed.toNumber() / 1e9,
+    participating: playerState.participatingInCycle,
+  } : {
     balance: 0,
     exposure: 0,
     exposedValue: 0,
@@ -45,6 +47,29 @@ export function PlayerPanel() {
         <div>
           <p className="text-gray-400 text-sm">Connect wallet to view</p>
           <p className="text-gray-500 text-xs mt-1">your player stats</p>
+        </div>
+      </GlassPanel>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <GlassPanel className="p-6 text-center space-y-4">
+        <Loader2 className="w-12 h-12 text-purple-400 mx-auto animate-spin" />
+        <div>
+          <p className="text-gray-400 text-sm">Loading player data...</p>
+        </div>
+      </GlassPanel>
+    );
+  }
+
+  if (!playerState) {
+    return (
+      <GlassPanel className="p-6 text-center space-y-4">
+        <Wallet className="w-12 h-12 text-gray-600 mx-auto" />
+        <div>
+          <p className="text-gray-400 text-sm">Player not registered</p>
+          <p className="text-gray-500 text-xs mt-1">Register to start playing</p>
         </div>
       </GlassPanel>
     );
