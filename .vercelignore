@@ -1,0 +1,23 @@
+# Backend (not deployed with frontend)
+backend/
+
+# Rust programs
+programs/
+Cargo.toml
+Anchor.toml
+
+# Tests
+tests/
+
+# Documentation (except README)
+*.md
+!README.md
+
+# Development files
+.env.local
+.env.development
+
+# Build artifacts
+target/
+node_modules/
+.next/
