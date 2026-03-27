@@ -33,6 +33,8 @@ Thumbs.db
 
 # Rust/Anchor
 target/
+!target/idl/
+!target/types/
 **/*.rs.bk
 .anchor/
 
