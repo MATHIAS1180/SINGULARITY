@@ -1,7 +1,7 @@
 # Backend (not deployed with frontend)
 backend/
 
-# Rust programs
+# Rust programs (but keep IDL and types)
 programs/
 Cargo.toml
 Anchor.toml
@@ -17,7 +17,10 @@ tests/
 .env.local
 .env.development
 
-# Build artifacts
-target/
+# Build artifacts (but keep target/idl and target/types)
+target/debug/
+target/release/
+target/deploy/
+target/.rustc_info.json
 node_modules/
 .next/
