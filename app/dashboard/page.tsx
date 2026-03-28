@@ -12,13 +12,14 @@ import { CycleTimeline } from '@/components/game/CycleTimeline';
 import { LeaderboardPreview } from '@/components/game/LeaderboardPreview';
 import { CycleResolver } from '@/components/game/CycleResolver';
 import { ClaimButton } from '@/components/game/ClaimButton';
-import { usePlayerState, useGameState } from '@/lib/hooks';
+import { usePlayerState, useGameState, usePlayerRank } from '@/lib/hooks';
 import { bnToSol } from '@/lib/anchor';
 
 export default function DashboardPage() {
   const { connected, publicKey } = useWallet();
   const { data: playerState, isLoading: playerLoading } = usePlayerState();
   const { data: gameState, isLoading: gameLoading } = useGameState();
+  const { data: playerRank } = usePlayerRank();
 
   // If wallet not connected, show connect prompt
   if (!connected) {
@@ -87,7 +88,7 @@ export default function DashboardPage() {
         />
         <StatCard
           label="Rank"
-          value="—"
+          value={playerRank ? `#${playerRank}` : (playerState ? "Unranked" : "—")}
           icon={<Users className="w-5 h-5" />}
           subtitle="Join to rank"
         />

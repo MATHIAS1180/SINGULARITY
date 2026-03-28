@@ -50,13 +50,21 @@ export async function setExposure(program: Program<SwarmArena>, newExposure: num
 }
 
 export async function resolveCycle(program: Program<SwarmArena>) {
+  const gameState = await fetchGameState(program);
+  const currentCycle = gameState.currentCycle.toNumber();
   const [configPDA] = getGlobalConfigPDA();
   const [gameStatePDA] = getGameStatePDA();
-  const gameState = await program.account.GameState.fetch(gameStatePDA);
-  const [cycleStatePDA] = getCycleStatePDA(gameState.currentCycle.toNumber());
+  const [cycleStatePDA] = getCycleStatePDA(currentCycle);
   const [treasuryVaultPDA] = getTreasuryVaultPDA();
   const [vaultPDA] = getVaultPDA();
-  return program.methods.resolveCycle().accounts({ config: configPDA, gameState: gameStatePDA, cycleState: cycleStatePDA, treasuryVault: treasuryVaultPDA, vault: vaultPDA, resolver: program.provider.publicKey, systemProgram: SystemProgram.programId }).rpc();
+  return program.methods.resolveCycle().accounts({ 
+    config: configPDA, 
+    gameState: gameStatePDA, 
+    cycleState: cycleStatePDA, 
+    treasuryVault: treasuryVaultPDA, 
+    vault: vaultPDA, 
+    resolver: program.provider.publicKey 
+  }).rpc();
 }
 
 export async function claimRedistribution(program: Program<SwarmArena>, cycleNumber: number) {
@@ -65,7 +73,14 @@ export async function claimRedistribution(program: Program<SwarmArena>, cycleNum
   const [cycleStatePDA] = getCycleStatePDA(cycleNumber);
   const [playerStatePDA] = getPlayerStatePDA(program.provider.publicKey!);
   const [vaultPDA] = getVaultPDA();
-  return program.methods.claimRedistribution(new BN(cycleNumber)).accounts({ config: configPDA, gameState: gameStatePDA, cycleState: cycleStatePDA, playerState: playerStatePDA, vault: vaultPDA, player: program.provider.publicKey, systemProgram: SystemProgram.programId }).rpc();
+  return program.methods.claimRedistribution(new BN(cycleNumber)).accounts({ 
+    config: configPDA, 
+    gameState: gameStatePDA, 
+    cycleState: cycleStatePDA, 
+    playerState: playerStatePDA, 
+    vault: vaultPDA, 
+    player: program.provider.publicKey 
+  }).rpc();
 }
 
 export async function fetchGlobalConfig(program: Program<SwarmArena>) {

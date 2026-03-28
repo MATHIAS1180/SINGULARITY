@@ -3,24 +3,23 @@
 import { useState } from 'react';
 import { Gift, Loader2, CheckCircle2, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
-import { useAnchorProgram, claimRedistribution, bnToSol } from '@/lib/anchor';
+import { useClaimRedistribution } from '@/lib/hooks/useCycleActions';
 import { useGameState } from '@/lib/hooks/useGameState';
 import { usePlayerState } from '@/lib/hooks/usePlayerState';
 import { useCycleHistory } from '@/lib/hooks/useCycleHistory';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function ClaimButton() {
-  const program = useAnchorProgram();
   const { data: gameState } = useGameState();
   const { data: playerState } = usePlayerState();
   const { data: cycleHistory } = useCycleHistory(1);
-  const queryClient = useQueryClient();
+  const claimMutation = useClaimRedistribution();
   
-  const [isClaiming, setIsClaiming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const isClaiming = claimMutation.isPending;
+  const error = claimMutation.error?.message || null;
+  const success = claimMutation.isSuccess;
 
-  if (!gameState || !program || !playerState) return null;
+  if (!gameState || !playerState) return null;
 
   // Can only claim if cycle is resolved and there's a previous cycle
   const currentCycle = gameState.currentCycle.toNumber();
@@ -31,31 +30,12 @@ export function ClaimButton() {
   const lastCycleInfo = cycleHistory && cycleHistory.length > 0 ? cycleHistory[0] : null;
 
   const handleClaim = async () => {
-    if (!program || !canClaim) return;
-
-    setIsClaiming(true);
-    setError(null);
-    setSuccess(false);
+    if (!canClaim) return;
 
     try {
-      const signature = await claimRedistribution(program, lastCycle);
-      console.log('Claimed redistribution:', signature);
-      
-      setSuccess(true);
-      
-      // Invalidate queries to refetch data
-      queryClient.invalidateQueries({ queryKey: ['playerState'] });
-      queryClient.invalidateQueries({ queryKey: ['gameState'] });
-      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-      queryClient.invalidateQueries({ queryKey: ['playerRank'] });
-      
-      // Reset success message after 5 seconds
-      setTimeout(() => setSuccess(false), 5000);
+      await claimMutation.mutateAsync(lastCycle);
     } catch (err) {
-      console.error('Failed to claim redistribution:', err);
-      setError(err instanceof Error ? err.message : 'Failed to claim redistribution');
-    } finally {
-      setIsClaiming(false);
+      // Error handled by hook
     }
   };
 

@@ -3,22 +3,20 @@
 import { useState } from 'react';
 import { RefreshCw, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
-import { useAnchorProgram, resolveCycle } from '@/lib/anchor';
+import { useResolveCycle } from '@/lib/hooks/useCycleActions';
 import { useGameState } from '@/lib/hooks/useGameState';
 import { useCurrentSlot } from '@/lib/hooks/useCurrentSlot';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function CycleResolver() {
-  const program = useAnchorProgram();
   const { data: gameState } = useGameState();
   const currentSlot = useCurrentSlot();
-  const queryClient = useQueryClient();
+  const resolveMutation = useResolveCycle();
   
-  const [isResolving, setIsResolving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const isResolving = resolveMutation.isPending;
+  const error = resolveMutation.error?.message || null;
 
-  if (!gameState || !program) return null;
+  if (!gameState) return null;
 
   const cycleEndSlot = gameState.cycleEndSlot.toNumber();
   const canResolve = currentSlot >= cycleEndSlot && !gameState.cycleResolved;
@@ -26,30 +24,12 @@ export function CycleResolver() {
   const progress = Math.min(100, ((currentSlot - gameState.cycleStartSlot.toNumber()) / (cycleEndSlot - gameState.cycleStartSlot.toNumber())) * 100);
 
   const handleResolve = async () => {
-    if (!program || !canResolve) return;
-
-    setIsResolving(true);
-    setError(null);
-    setSuccess(false);
+    if (!canResolve) return;
 
     try {
-      const signature = await resolveCycle(program);
-      console.log('Cycle resolved:', signature);
-      
-      setSuccess(true);
-      
-      // Invalidate queries to refetch data
-      queryClient.invalidateQueries({ queryKey: ['gameState'] });
-      queryClient.invalidateQueries({ queryKey: ['cycleHistory'] });
-      queryClient.invalidateQueries({ queryKey: ['playerState'] });
-      
-      // Reset success message after 5 seconds
-      setTimeout(() => setSuccess(false), 5000);
+      await resolveMutation.mutateAsync();
     } catch (err) {
-      console.error('Failed to resolve cycle:', err);
-      setError(err instanceof Error ? err.message : 'Failed to resolve cycle');
-    } finally {
-      setIsResolving(false);
+      // Error is handled by the hook
     }
   };
 
@@ -115,7 +95,7 @@ export function CycleResolver() {
       )}
 
       {/* Status Messages */}
-      {success && (
+      {resolveMutation.isSuccess && (
         <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center gap-2 text-green-400 text-sm">
           <CheckCircle2 className="w-4 h-4" />
           Cycle resolved successfully! You can now claim rewards.
