@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 
 export function LiveArena() {
   const { data: gameState, isLoading } = useGameState();
-  const { slot: currentSlot } = useCurrentSlot();
+  const currentSlot = useCurrentSlot();
   const [cycleProgress, setCycleProgress] = useState(0);
 
   // Calculate cycle progress
