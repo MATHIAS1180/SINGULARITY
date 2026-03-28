@@ -6,3 +6,5 @@ export * from './useLeaderboard';
 export * from './usePlayerRank';
 export * from './useCycleHistory';
 export * from './useActivityFeed';
+export * from './useProtocolInitialized';
+export * from './useInitializeProtocol';

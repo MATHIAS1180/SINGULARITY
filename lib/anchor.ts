@@ -20,6 +20,36 @@ export function useAnchorProgram() {
   return program;
 }
 
+export async function initializeConfig(
+  program: Program<SwarmArena>,
+  protocolFeeBps: number,
+  minDeposit: BN,
+  maxDeposit: BN,
+  minExposure: number,
+  maxExposure: number,
+  cycleDuration: BN,
+  exposureCooldown: BN
+) {
+  const [configPDA] = getGlobalConfigPDA();
+  const [gameStatePDA] = getGameStatePDA();
+  const [treasuryVaultPDA] = getTreasuryVaultPDA();
+  return program.methods.initializeConfig(
+    protocolFeeBps,
+    minDeposit,
+    maxDeposit,
+    minExposure,
+    maxExposure,
+    cycleDuration,
+    exposureCooldown
+  ).accounts({
+    config: configPDA,
+    gameState: gameStatePDA,
+    treasuryVault: treasuryVaultPDA,
+    authority: program.provider.publicKey,
+    systemProgram: SystemProgram.programId,
+  }).rpc();
+}
+
 export async function registerPlayer(program: Program<SwarmArena>) {
   const [configPDA] = getGlobalConfigPDA();
   const [playerStatePDA] = getPlayerStatePDA(program.provider.publicKey!);

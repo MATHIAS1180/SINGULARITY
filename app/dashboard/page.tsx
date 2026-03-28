@@ -12,6 +12,7 @@ import { CycleTimeline } from '@/components/game/CycleTimeline';
 import { LeaderboardPreview } from '@/components/game/LeaderboardPreview';
 import { CycleResolver } from '@/components/game/CycleResolver';
 import { ClaimButton } from '@/components/game/ClaimButton';
+import { ProtocolStatus } from '@/components/game/ProtocolStatus';
 import { usePlayerState, useGameState, usePlayerRank } from '@/lib/hooks';
 import { bnToSol } from '@/lib/anchor';
 
@@ -67,6 +68,9 @@ export default function DashboardPage() {
           <p className="text-gray-400">Loading blockchain data...</p>
         </GlassPanel>
       )}
+
+      {/* Protocol Status */}
+      <ProtocolStatus />
 
       {/* Player Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
