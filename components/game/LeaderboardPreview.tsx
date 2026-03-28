@@ -1,17 +1,9 @@
 'use client';
 
-import { Trophy, TrendingUp, ArrowRight, Crown, Medal } from 'lucide-react';
+import { Trophy, TrendingUp, ArrowRight, Crown, Medal, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/GlassPanel';
-import { RankBadge } from '@/components/ui/RankBadge';
-
-interface LeaderboardPlayer {
-  rank: number;
-  wallet: string;
-  score: number;
-  pnl: number;
-  change: number;
-}
+import { useLeaderboard } from '@/lib/hooks';
 
 interface LeaderboardPreviewProps {
   limit?: number;
@@ -22,46 +14,7 @@ export function LeaderboardPreview({
   limit = 5,
   className = '' 
 }: LeaderboardPreviewProps) {
-  // Mock data - replace with real API data
-  const mockPlayers: LeaderboardPlayer[] = [
-    {
-      rank: 1,
-      wallet: 'ABC...XYZ',
-      score: 15420,
-      pnl: 45.2,
-      change: 2,
-    },
-    {
-      rank: 2,
-      wallet: 'DEF...UVW',
-      score: 12350,
-      pnl: 32.1,
-      change: -1,
-    },
-    {
-      rank: 3,
-      wallet: 'GHI...RST',
-      score: 10890,
-      pnl: 28.4,
-      change: 1,
-    },
-    {
-      rank: 4,
-      wallet: 'JKL...OPQ',
-      score: 9240,
-      pnl: 18.7,
-      change: 0,
-    },
-    {
-      rank: 5,
-      wallet: 'MNO...LMN',
-      score: 8150,
-      pnl: 15.3,
-      change: 3,
-    },
-  ];
-
-  const topPlayers = mockPlayers.slice(0, limit);
+  const { data: leaderboard, isLoading } = useLeaderboard(limit);
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Crown className="w-4 h-4 text-yellow-400" />;
@@ -96,7 +49,12 @@ export function LeaderboardPreview({
 
       {/* Players List */}
       <div className="divide-y divide-white/5">
-        {topPlayers.length === 0 ? (
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <Loader2 className="w-8 h-8 text-purple-400 mx-auto animate-spin mb-2" />
+            <p className="text-gray-400 text-sm">Loading leaderboard...</p>
+          </div>
+        ) : !leaderboard || leaderboard.length === 0 ? (
           <div className="p-8 text-center">
             <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
             <p className="text-gray-400">No players yet</p>
@@ -105,9 +63,9 @@ export function LeaderboardPreview({
             </p>
           </div>
         ) : (
-          topPlayers.map((player) => (
+          leaderboard.map((player) => (
             <div
-              key={player.rank}
+              key={player.wallet}
               className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
             >
               <div className="flex items-center justify-between">
@@ -128,7 +86,7 @@ export function LeaderboardPreview({
                       {player.wallet.slice(0, 2)}
                     </div>
                     <span className="font-medium text-white text-sm">
-                      {player.wallet}
+                      {player.wallet.slice(0, 4)}...{player.wallet.slice(-4)}
                     </span>
                   </div>
                 </div>
@@ -147,27 +105,11 @@ export function LeaderboardPreview({
                   <div className="text-right min-w-[60px]">
                     <p className="text-xs text-gray-400">P&L</p>
                     <p className={`text-sm font-semibold ${
-                      player.pnl >= 0 ? 'text-green-400' : 'text-red-400'
+                      player.totalRedistributed >= 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
-                      {player.pnl >= 0 ? '+' : ''}{player.pnl.toFixed(1)}
+                      {player.totalRedistributed >= 0 ? '+' : ''}{player.totalRedistributed.toFixed(2)}
                     </p>
                   </div>
-
-                  {/* Change Indicator */}
-                  {player.change !== 0 && (
-                    <div className={`flex items-center gap-1 ${
-                      player.change > 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      <TrendingUp 
-                        className={`w-3 h-3 ${
-                          player.change < 0 ? 'rotate-180' : ''
-                        }`} 
-                      />
-                      <span className="text-xs font-medium">
-                        {Math.abs(player.change)}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -176,30 +118,37 @@ export function LeaderboardPreview({
       </div>
 
       {/* Footer Stats */}
-      <div className="p-4 bg-white/5 border-t border-white/10">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-xs text-gray-400">Total Players</p>
-            <p className="text-sm font-semibold text-white mt-1">
-              {mockPlayers.length}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">Avg Score</p>
-            <p className="text-sm font-semibold text-white mt-1">
-              {Math.round(
-                mockPlayers.reduce((sum, p) => sum + p.score, 0) / mockPlayers.length
-              ).toLocaleString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">Total P&L</p>
-            <p className="text-sm font-semibold text-green-400 mt-1">
-              +{mockPlayers.reduce((sum, p) => sum + p.pnl, 0).toFixed(1)}
-            </p>
+      {leaderboard && leaderboard.length > 0 && (
+        <div className="p-4 bg-white/5 border-t border-white/10">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-xs text-gray-400">Total Players</p>
+              <p className="text-sm font-semibold text-white mt-1">
+                {leaderboard.length}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Avg Score</p>
+              <p className="text-sm font-semibold text-white mt-1">
+                {Math.round(
+                  leaderboard.reduce((sum, p) => sum + p.score, 0) / leaderboard.length
+                ).toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Total P&L</p>
+              <p className={`text-sm font-semibold mt-1 ${
+                leaderboard.reduce((sum, p) => sum + p.totalRedistributed, 0) >= 0 
+                  ? 'text-green-400' 
+                  : 'text-red-400'
+              }`}>
+                {leaderboard.reduce((sum, p) => sum + p.totalRedistributed, 0) >= 0 ? '+' : ''}
+                {leaderboard.reduce((sum, p) => sum + p.totalRedistributed, 0).toFixed(2)}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </GlassPanel>
   );
 }

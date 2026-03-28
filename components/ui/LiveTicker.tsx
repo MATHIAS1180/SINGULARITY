@@ -1,71 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { 
   ArrowDownCircle, 
   ArrowUpCircle, 
   Target, 
   Zap, 
   Trophy,
-  TrendingUp,
-  TrendingDown
+  TrendingDown,
+  DollarSign
 } from 'lucide-react';
 import { GlassPanel } from './GlassPanel';
-
-interface TickerEvent {
-  id: string;
-  type: 'deposit' | 'withdrawal' | 'exposure' | 'cycle' | 'reward' | 'loss';
-  player: string;
-  amount?: number;
-  exposure?: number;
-  cycle?: number;
-  timestamp: Date;
-}
+import { useActivityFeed, ActivityEvent } from '@/lib/hooks/useActivityFeed';
 
 interface LiveTickerProps {
   maxEvents?: number;
-  autoScroll?: boolean;
   className?: string;
 }
 
 export function LiveTicker({ 
-  maxEvents = 10, 
-  autoScroll = true,
+  maxEvents = 10,
   className = '' 
 }: LiveTickerProps) {
-  const [events, setEvents] = useState<TickerEvent[]>([]);
+  const events = useActivityFeed(maxEvents);
 
-  // Mock data generator - replace with real WebSocket/API data
-  useEffect(() => {
-    const generateMockEvent = (): TickerEvent => {
-      const types: TickerEvent['type'][] = ['deposit', 'withdrawal', 'exposure', 'cycle', 'reward', 'loss'];
-      const type = types[Math.floor(Math.random() * types.length)];
-      
-      return {
-        id: Math.random().toString(36).substr(2, 9),
-        type,
-        player: `${Math.random().toString(36).substr(2, 3).toUpperCase()}...${Math.random().toString(36).substr(2, 3).toUpperCase()}`,
-        amount: type !== 'exposure' && type !== 'cycle' ? Math.random() * 10 + 0.1 : undefined,
-        exposure: type === 'exposure' ? Math.floor(Math.random() * 100) : undefined,
-        cycle: type === 'cycle' ? Math.floor(Math.random() * 100) + 1 : undefined,
-        timestamp: new Date(),
-      };
-    };
-
-    // Add initial events
-    const initialEvents = Array.from({ length: 5 }, generateMockEvent);
-    setEvents(initialEvents);
-
-    // Simulate new events every 5-10 seconds
-    const interval = setInterval(() => {
-      const newEvent = generateMockEvent();
-      setEvents(prev => [newEvent, ...prev].slice(0, maxEvents));
-    }, Math.random() * 5000 + 5000);
-
-    return () => clearInterval(interval);
-  }, [maxEvents]);
-
-  const getEventIcon = (type: TickerEvent['type']) => {
+  const getEventIcon = (type: ActivityEvent['type']) => {
     switch (type) {
       case 'deposit':
         return <ArrowDownCircle className="w-4 h-4 text-green-400" />;
@@ -79,17 +37,23 @@ export function LiveTicker({
         return <Trophy className="w-4 h-4 text-yellow-400" />;
       case 'loss':
         return <TrendingDown className="w-4 h-4 text-red-400" />;
+      case 'fee':
+        return <DollarSign className="w-4 h-4 text-purple-400" />;
       default:
         return null;
     }
   };
 
-  const getEventText = (event: TickerEvent) => {
+  const getEventText = (event: ActivityEvent) => {
+    const shortWallet = event.player === 'System' || event.player === 'Protocol'
+      ? event.player
+      : `${event.player.slice(0, 4)}...${event.player.slice(-4)}`;
+
     switch (event.type) {
       case 'deposit':
         return (
           <>
-            <span className="font-medium text-white">{event.player}</span>
+            <span className="font-medium text-white">{shortWallet}</span>
             <span className="text-gray-400"> deposited </span>
             <span className="font-semibold text-green-400">+{event.amount?.toFixed(2)} SOL</span>
           </>
@@ -97,7 +61,7 @@ export function LiveTicker({
       case 'withdrawal':
         return (
           <>
-            <span className="font-medium text-white">{event.player}</span>
+            <span className="font-medium text-white">{shortWallet}</span>
             <span className="text-gray-400"> withdrew </span>
             <span className="font-semibold text-red-400">-{event.amount?.toFixed(2)} SOL</span>
           </>
@@ -105,7 +69,7 @@ export function LiveTicker({
       case 'exposure':
         return (
           <>
-            <span className="font-medium text-white">{event.player}</span>
+            <span className="font-medium text-white">{shortWallet}</span>
             <span className="text-gray-400"> set exposure to </span>
             <span className="font-semibold text-purple-400">{event.exposure}%</span>
           </>
@@ -113,14 +77,14 @@ export function LiveTicker({
       case 'cycle':
         return (
           <>
-            <span className="font-semibold text-blue-400">Cycle #{event.cycle}</span>
+            <span className="font-semibold text-blue-400">Cycle #{event.cycleNumber}</span>
             <span className="text-gray-400"> resolved</span>
           </>
         );
       case 'reward':
         return (
           <>
-            <span className="font-medium text-white">{event.player}</span>
+            <span className="font-medium text-white">{shortWallet}</span>
             <span className="text-gray-400"> won </span>
             <span className="font-semibold text-yellow-400">+{event.amount?.toFixed(2)} SOL</span>
           </>
@@ -128,9 +92,17 @@ export function LiveTicker({
       case 'loss':
         return (
           <>
-            <span className="font-medium text-white">{event.player}</span>
+            <span className="font-medium text-white">{shortWallet}</span>
             <span className="text-gray-400"> lost </span>
             <span className="font-semibold text-red-400">-{event.amount?.toFixed(2)} SOL</span>
+          </>
+        );
+      case 'fee':
+        return (
+          <>
+            <span className="font-semibold text-purple-400">Protocol</span>
+            <span className="text-gray-400"> collected </span>
+            <span className="font-semibold text-purple-400">{event.amount?.toFixed(2)} SOL</span>
           </>
         );
       default:
@@ -158,7 +130,7 @@ export function LiveTicker({
       <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {events.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500 text-sm">Waiting for activity...</p>
+            <p className="text-gray-500 text-sm">Waiting for on-chain activity...</p>
           </div>
         ) : (
           events.map((event, index) => (

@@ -10,6 +10,8 @@ import { PlayerPanel } from '@/components/game/PlayerPanel';
 import { PlayerActions } from '@/components/game/PlayerActions';
 import { CycleTimeline } from '@/components/game/CycleTimeline';
 import { LeaderboardPreview } from '@/components/game/LeaderboardPreview';
+import { CycleResolver } from '@/components/game/CycleResolver';
+import { ClaimButton } from '@/components/game/ClaimButton';
 import { usePlayerState, useGameState } from '@/lib/hooks';
 import { bnToSol } from '@/lib/anchor';
 
@@ -104,6 +106,12 @@ export default function DashboardPage() {
 
         {/* Center Column - Live Arena */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Cycle Resolver - Shows when cycle can be resolved */}
+          <CycleResolver />
+
+          {/* Claim Button - Shows when redistribution can be claimed */}
+          <ClaimButton />
+
           {/* Cycle Timeline */}
           <GlassPanel className="p-6">
             <div className="flex items-center justify-between mb-4">

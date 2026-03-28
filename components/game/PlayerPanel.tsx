@@ -15,11 +15,13 @@ import {
 import { GlassPanel } from '../ui/GlassPanel';
 import { RankBadge } from '../ui/RankBadge';
 import { usePlayerState } from '@/lib/hooks';
+import { usePlayerRank } from '@/lib/hooks';
 import { bnToSol } from '@/lib/anchor';
 
 export function PlayerPanel() {
   const { connected, publicKey } = useWallet();
   const { data: playerState, isLoading } = usePlayerState();
+  const { data: playerRank } = usePlayerRank();
 
   // Calculate stats from blockchain data
   const stats = playerState ? {
@@ -27,7 +29,7 @@ export function PlayerPanel() {
     exposure: playerState.exposure,
     exposedValue: bnToSol(playerState.exposedValue),
     score: playerState.score.toNumber(),
-    rank: 0, // TODO: Calculate from leaderboard
+    rank: playerRank || 0,
     totalPnL: playerState.totalRedistributed.toNumber() / 1e9,
     participating: playerState.participatingInCycle,
   } : {

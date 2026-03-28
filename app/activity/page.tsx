@@ -4,80 +4,29 @@ import { useState } from 'react';
 import { 
   Activity,
   TrendingUp,
-  TrendingDown,
   ArrowDownCircle,
   ArrowUpCircle,
   Target,
   Zap,
   Trophy,
   Clock,
-  Filter
+  Filter,
+  Loader2,
+  DollarSign
 } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { StatCard } from '@/components/ui/StatCard';
+import { useActivityFeed, ActivityEventType } from '@/lib/hooks/useActivityFeed';
+import { useGameState } from '@/lib/hooks';
 
-type EventType = 'all' | 'deposit' | 'withdrawal' | 'exposure' | 'cycle' | 'reward';
-
-interface ActivityEvent {
-  id: string;
-  type: EventType;
-  player: string;
-  amount?: number;
-  exposure?: number;
-  cycle?: number;
-  timestamp: Date;
-  signature: string;
-}
+type FilterType = 'all' | ActivityEventType;
 
 export default function ActivityPage() {
-  const [filter, setFilter] = useState<EventType>('all');
+  const [filter, setFilter] = useState<FilterType>('all');
+  const events = useActivityFeed(100);
+  const { data: gameState } = useGameState();
 
-  // Mock data - replace with real data from API
-  const mockEvents: ActivityEvent[] = [
-    {
-      id: '1',
-      type: 'deposit',
-      player: 'ABC...XYZ',
-      amount: 10.5,
-      timestamp: new Date(Date.now() - 2 * 60 * 1000),
-      signature: 'sig1...',
-    },
-    {
-      id: '2',
-      type: 'exposure',
-      player: 'DEF...UVW',
-      exposure: 75,
-      timestamp: new Date(Date.now() - 5 * 60 * 1000),
-      signature: 'sig2...',
-    },
-    {
-      id: '3',
-      type: 'cycle',
-      cycle: 42,
-      player: 'System',
-      timestamp: new Date(Date.now() - 10 * 60 * 1000),
-      signature: 'sig3...',
-    },
-    {
-      id: '4',
-      type: 'reward',
-      player: 'GHI...RST',
-      amount: 5.2,
-      cycle: 42,
-      timestamp: new Date(Date.now() - 12 * 60 * 1000),
-      signature: 'sig4...',
-    },
-    {
-      id: '5',
-      type: 'withdrawal',
-      player: 'JKL...OPQ',
-      amount: 8.3,
-      timestamp: new Date(Date.now() - 15 * 60 * 1000),
-      signature: 'sig5...',
-    },
-  ];
-
-  const getEventIcon = (type: EventType) => {
+  const getEventIcon = (type: ActivityEventType) => {
     switch (type) {
       case 'deposit':
         return <ArrowDownCircle className="w-5 h-5 text-green-400" />;
@@ -89,12 +38,16 @@ export default function ActivityPage() {
         return <Zap className="w-5 h-5 text-blue-400" />;
       case 'reward':
         return <Trophy className="w-5 h-5 text-yellow-400" />;
+      case 'loss':
+        return <TrendingUp className="w-5 h-5 text-red-400 rotate-180" />;
+      case 'fee':
+        return <DollarSign className="w-5 h-5 text-purple-400" />;
       default:
         return <Activity className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getEventColor = (type: EventType) => {
+  const getEventColor = (type: ActivityEventType) => {
     switch (type) {
       case 'deposit':
         return 'border-green-500/30 bg-green-500/5';
@@ -106,23 +59,35 @@ export default function ActivityPage() {
         return 'border-blue-500/30 bg-blue-500/5';
       case 'reward':
         return 'border-yellow-500/30 bg-yellow-500/5';
+      case 'loss':
+        return 'border-red-500/30 bg-red-500/5';
+      case 'fee':
+        return 'border-purple-500/30 bg-purple-500/5';
       default:
         return 'border-white/10';
     }
   };
 
-  const getEventTitle = (event: ActivityEvent) => {
+  const getEventTitle = (event: typeof events[0]) => {
+    const shortWallet = event.player === 'System' || event.player === 'Protocol' 
+      ? event.player 
+      : `${event.player.slice(0, 4)}...${event.player.slice(-4)}`;
+
     switch (event.type) {
       case 'deposit':
-        return `${event.player} deposited ${event.amount} SOL`;
+        return `${shortWallet} deposited ${event.amount?.toFixed(4)} SOL`;
       case 'withdrawal':
-        return `${event.player} withdrew ${event.amount} SOL`;
+        return `${shortWallet} withdrew ${event.amount?.toFixed(4)} SOL`;
       case 'exposure':
-        return `${event.player} set exposure to ${event.exposure}%`;
+        return `${shortWallet} set exposure to ${event.exposure}%`;
       case 'cycle':
-        return `Cycle #${event.cycle} resolved`;
+        return `Cycle #${event.cycleNumber} resolved - ${event.amount?.toFixed(4)} SOL redistributed`;
       case 'reward':
-        return `${event.player} earned ${event.amount} SOL in cycle #${event.cycle}`;
+        return `${shortWallet} earned ${event.amount?.toFixed(4)} SOL in cycle #${event.cycleNumber}`;
+      case 'loss':
+        return `${shortWallet} lost ${event.amount?.toFixed(4)} SOL in cycle #${event.cycleNumber}`;
+      case 'fee':
+        return `Protocol collected ${event.amount?.toFixed(4)} SOL in fees from cycle #${event.cycleNumber}`;
       default:
         return 'Unknown event';
     }
@@ -138,8 +103,17 @@ export default function ActivityPage() {
   };
 
   const filteredEvents = filter === 'all' 
-    ? mockEvents 
-    : mockEvents.filter(e => e.type === filter);
+    ? events 
+    : events.filter(e => e.type === filter);
+
+  // Calculate stats
+  const last24h = events.filter(e => Date.now() - e.timestamp.getTime() < 24 * 60 * 60 * 1000);
+  const eventsToday = last24h.length;
+  const volumeToday = last24h
+    .filter(e => e.type === 'deposit' || e.type === 'withdrawal')
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+  const uniquePlayers = new Set(last24h.filter(e => e.player !== 'System' && e.player !== 'Protocol').map(e => e.player)).size;
+  const cyclesToday = last24h.filter(e => e.type === 'cycle').length;
 
   return (
     <div className="space-y-6">
@@ -157,24 +131,22 @@ export default function ActivityPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           label="Events Today"
-          value="0"
+          value={eventsToday.toString()}
           icon={<Activity className="w-5 h-5" />}
-          trend="+0%"
         />
         <StatCard
           label="Volume 24h"
-          value="0 SOL"
+          value={`${volumeToday.toFixed(2)} SOL`}
           icon={<TrendingUp className="w-5 h-5" />}
-          trend="+0%"
         />
         <StatCard
           label="Active Players"
-          value="0"
+          value={uniquePlayers.toString()}
           icon={<Target className="w-5 h-5" />}
         />
         <StatCard
           label="Cycles Today"
-          value="0"
+          value={cyclesToday.toString()}
           icon={<Zap className="w-5 h-5" />}
         />
       </div>
@@ -264,7 +236,7 @@ export default function ActivityPage() {
             <Activity className="w-12 h-12 text-gray-600 mx-auto mb-3" />
             <p className="text-gray-400">No activity yet</p>
             <p className="text-sm text-gray-500 mt-1">
-              Events will appear here as they happen
+              Events will appear here as they happen on-chain
             </p>
           </GlassPanel>
         ) : (
@@ -291,15 +263,9 @@ export default function ActivityPage() {
                           <Clock className="w-3.5 h-3.5" />
                           <span>{getTimeAgo(event.timestamp)}</span>
                         </div>
-                        <button
-                          onClick={() => window.open(`https://explorer.solana.com/tx/${event.signature}?cluster=devnet`, '_blank')}
-                          className="hover:text-purple-400 transition-colors flex items-center gap-1"
-                        >
-                          <span className="truncate max-w-[100px]">{event.signature}</span>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </button>
+                        {event.slot && (
+                          <span className="text-xs">Slot {event.slot}</span>
+                        )}
                       </div>
                     </div>
 
@@ -311,7 +277,7 @@ export default function ActivityPage() {
                           : 'bg-red-500/20 text-red-400'
                       }`}>
                         {event.type === 'deposit' || event.type === 'reward' ? '+' : '-'}
-                        {event.amount} SOL
+                        {event.amount.toFixed(4)} SOL
                       </div>
                     )}
                     {event.exposure !== undefined && (
@@ -327,12 +293,10 @@ export default function ActivityPage() {
         )}
       </div>
 
-      {/* Load More */}
-      {filteredEvents.length > 0 && (
-        <div className="text-center">
-          <button className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium transition-all">
-            Load More
-          </button>
+      {/* Info */}
+      {events.length > 0 && (
+        <div className="text-center text-sm text-gray-500">
+          Showing {filteredEvents.length} of {events.length} events
         </div>
       )}
     </div>

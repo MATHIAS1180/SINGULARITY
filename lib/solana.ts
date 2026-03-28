@@ -128,7 +128,17 @@ export function getPlayerStatePDA(playerPubkey: PublicKey): [PublicKey, number] 
 }
 
 /**
- * Derive PDA for treasury vault
+ * Derive PDA for vault (player funds)
+ */
+export function getVaultPDA(): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from('vault')],
+    PROGRAM_ID
+  );
+}
+
+/**
+ * Derive PDA for treasury vault (protocol fees)
  */
 export function getTreasuryVaultPDA(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(

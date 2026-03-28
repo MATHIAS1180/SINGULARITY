@@ -11,24 +11,25 @@ import {
 } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
 import { useGameState } from '@/lib/hooks';
+import { useCurrentSlot } from '@/lib/hooks';
 import { bnToSol } from '@/lib/anchor';
 import { useEffect, useState } from 'react';
 
 export function LiveArena() {
   const { data: gameState, isLoading } = useGameState();
+  const { slot: currentSlot } = useCurrentSlot();
   const [cycleProgress, setCycleProgress] = useState(0);
 
   // Calculate cycle progress
   useEffect(() => {
-    if (!gameState) return;
+    if (!gameState || !currentSlot) return;
 
-    const currentSlot = Date.now() / 400; // Approximate current slot
     const elapsed = currentSlot - gameState.cycleStartSlot.toNumber();
     const total = gameState.cycleEndSlot.toNumber() - gameState.cycleStartSlot.toNumber();
     const progress = Math.min(Math.max((elapsed / total) * 100, 0), 100);
     
     setCycleProgress(progress);
-  }, [gameState]);
+  }, [gameState, currentSlot]);
 
   // Calculate metrics from blockchain data
   const metrics = gameState ? {
