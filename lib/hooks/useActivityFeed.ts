@@ -32,7 +32,7 @@ export function useActivityFeed(limit: number = 50) {
     const depositListener = program.addEventListener('DepositMade', (event, slot) => {
       setEvents(prev => [{
         id: `deposit-${slot}-${event.player.toString()}`,
-        type: 'deposit',
+        type: 'deposit' as ActivityEventType,
         player: event.player.toString(),
         amount: event.amount.toNumber() / 1e9,
         timestamp: new Date(event.timestamp.toNumber() * 1000),
@@ -45,7 +45,7 @@ export function useActivityFeed(limit: number = 50) {
     const withdrawListener = program.addEventListener('WithdrawMade', (event, slot) => {
       setEvents(prev => [{
         id: `withdraw-${slot}-${event.player.toString()}`,
-        type: 'withdrawal',
+        type: 'withdrawal' as ActivityEventType,
         player: event.player.toString(),
         amount: event.amount.toNumber() / 1e9,
         timestamp: new Date(event.timestamp.toNumber() * 1000),
@@ -58,7 +58,7 @@ export function useActivityFeed(limit: number = 50) {
     const exposureListener = program.addEventListener('ExposureUpdated', (event, slot) => {
       setEvents(prev => [{
         id: `exposure-${slot}-${event.player.toString()}`,
-        type: 'exposure',
+        type: 'exposure' as ActivityEventType,
         player: event.player.toString(),
         exposure: event.newExposure,
         amount: event.exposedValue.toNumber() / 1e9,
@@ -72,7 +72,7 @@ export function useActivityFeed(limit: number = 50) {
     const cycleListener = program.addEventListener('CycleResolved', (event, slot) => {
       setEvents(prev => [{
         id: `cycle-${slot}-${event.cycleNumber.toString()}`,
-        type: 'cycle',
+        type: 'cycle' as ActivityEventType,
         player: 'System',
         cycleNumber: event.cycleNumber.toNumber(),
         amount: event.totalRedistributed.toNumber() / 1e9,
@@ -87,7 +87,7 @@ export function useActivityFeed(limit: number = 50) {
       const amount = event.redistributionAmount.toNumber() / 1e9;
       setEvents(prev => [{
         id: `reward-${slot}-${event.player.toString()}`,
-        type: amount >= 0 ? 'reward' : 'loss',
+        type: (amount >= 0 ? 'reward' : 'loss') as ActivityEventType,
         player: event.player.toString(),
         amount: Math.abs(amount),
         cycleNumber: event.cycleNumber.toNumber(),
@@ -101,7 +101,7 @@ export function useActivityFeed(limit: number = 50) {
     const feeListener = program.addEventListener('FeeCollected', (event, slot) => {
       setEvents(prev => [{
         id: `fee-${slot}-${event.cycleNumber.toString()}`,
-        type: 'fee',
+        type: 'fee' as ActivityEventType,
         player: 'Protocol',
         amount: event.amount.toNumber() / 1e9,
         cycleNumber: event.cycleNumber.toNumber(),
