@@ -17,11 +17,10 @@ tests/
 .env.local
 .env.development
 
-# Build artifacts (but keep target/idl)
+# Build artifacts (but keep target/idl and target/types)
 target/debug/
 target/release/
 target/deploy/
-target/types/
 target/.rustc_info.json
 node_modules/
 .next/

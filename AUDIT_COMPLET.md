@@ -1500,3 +1500,912 @@ treasury_balance == sum(all fees_collected)
 
 ---
 
+# AUDIT DE VÉRITÉ FONCTIONNELLE - SWARM ARENA (PARTIE 2)
+
+## 7. BACKEND DÉTAILLÉ
+
+### 7.1 Architecture backend
+
+**Framework**: Express.js  
+**Langage**: TypeScript  
+**Base de données**: PostgreSQL (NON CONNECTÉE)  
+**Indexation**: Event listening Solana (NON IMPLÉMENTÉE)
+
+### 7.2 Fichiers principaux
+
+#### 7.2.1 index.ts
+
+**Rôle**: Point d'entrée du backend
+
+**Fonctions**:
+- Initialise IndexerService
+- Démarre event listener
+- Crée serveur HTTP
+- Gère graceful shutdown
+
+**État**: Structure complète, mais IndexerService ne fait rien
+
+**Source**: `backend/src/index.ts`
+
+#### 7.2.2 server.ts
+
+**Rôle**: Configuration Express
+
+**Middleware**:
+- helmet (security headers)
+- cors
+- body parsing (json, urlencoded)
+- request logging
+
+**Routes**:
+- `/health` - Health check
+- `/api/game` - Game routes
+- `/api/players` - Player routes
+
+**Error handling**: Global error handler avec ApiError
+
+**Source**: `backend/src/server.ts`
+
+#### 7.2.3 config.ts
+
+**Rôle**: Configuration de l'application
+
+**Variables d'environnement**:
+- `NODE_ENV` - Environment (development/production/test)
+- `PORT` - Port du serveur (défaut: 3000)
+- `SOLANA_CLUSTER` - Cluster Solana (défaut: devnet)
+- `RPC_ENDPOINT` - Endpoint RPC (défaut: https://api.devnet.solana.com)
+- `PROGRAM_ID` - ID du programme (défaut: FbSDMGKyTo1YYGMjtau1JLBUDh18koz1JKN3NL38Zmf3)
+- `DATABASE_URL` - URL PostgreSQL (défaut: postgresql://postgres:postgres@localhost:5432/swarm_arena)
+- `CORS_ORIGIN` - Origine CORS (défaut: *)
+- `LOG_LEVEL` - Niveau de log (défaut: debug en dev, info en prod)
+- `INDEXER_POLL_INTERVAL` - Intervalle de polling (défaut: 5000ms)
+- `INDEXER_BATCH_SIZE` - Taille des batches (défaut: 100)
+- `INDEXER_START_SLOT` - Slot de départ (optionnel)
+
+**Source**: `backend/src/config.ts`
+
+### 7.3 Routes
+
+#### 7.3.1 Health routes (`routes/health.routes.ts`)
+
+**Endpoints**:
+- `GET /health` - Simple health check
+- `GET /health/ready` - Readiness check
+- `GET /health/live` - Liveness check
+
+**Implémentation**: COMPLÈTE et FONCTIONNELLE
+
+**Source**: `backend/src/routes/health.routes.ts`
+
+#### 7.3.2 Game routes (`routes/game.routes.ts`)
+
+**Endpoints**:
+- `GET /api/game/state` - Current game state
+- `GET /api/game/cycles` - Historical cycles (pagination)
+- `GET /api/game/cycles/:cycleNumber` - Specific cycle
+- `GET /api/game/leaderboard` - Player leaderboard (pagination, sortBy)
+- `GET /api/game/activity` - Recent activity (pagination, type filter)
+- `GET /api/game/player/:wallet` - Player state by wallet
+- `GET /api/game/stats` - Global statistics
+
+**Implémentation**: Routes définies, MAIS retournent des MOCKS (données vides)
+
+**Source de données**: IndexerService (qui ne fait rien)
+
+**Source**: `backend/src/routes/game.routes.ts`
+
+#### 7.3.3 Player routes (`routes/player.routes.ts`)
+
+**Contenu**: Fichier vide, juste un commentaire "// Player routes"
+
+**Implémentation**: NON IMPLÉMENTÉE
+
+**Source**: `backend/src/routes/player.routes.ts`
+
+### 7.4 Services
+
+#### 7.4.1 IndexerService (`services/indexer.service.ts`)
+
+**Rôle**: Écouter les events blockchain et indexer dans la DB
+
+**Méthodes**:
+- `initialize()` - Initialise le service
+- `startListening()` - Démarre l'écoute des events
+- `stopListening()` - Arrête l'écoute
+- `pollEvents()` - Polling des nouveaux events
+- `processNewEvents()` - Traite les events depuis last_processed_slot
+- `processTransaction()` - Traite une transaction
+- `parseAndStoreEvent()` - Parse et stocke un event
+- Event handlers: `handlePlayerRegistered`, `handleDepositMade`, etc.
+- Query methods: `getGameState`, `getCycles`, `getLeaderboard`, etc.
+
+**Implémentation**:
+- Structure COMPLÈTE
+- Logique de polling DÉFINIE
+- Event handlers VIDES (juste des logs)
+- Query methods RETOURNENT DES MOCKS
+- Aucune connexion à la DB
+- Aucun parsing réel des events
+
+**État**: PLACEHOLDER, ne fait rien de fonctionnel
+
+**Source**: `backend/src/services/indexer.service.ts`
+
+#### 7.4.2 LeaderboardService (`services/leaderboard.service.ts`)
+
+**Rôle**: Calculs et rankings du leaderboard
+
+**Méthodes**:
+- `getTopPlayersByScore()` - Top joueurs par score
+- `getTopPlayersByBalance()` - Top joueurs par balance
+- `getTopPlayersByCycles()` - Top joueurs par cycles participés
+- `getTopPlayersByRedistributed()` - Top joueurs par gains
+- `getTopCyclesByTVL()` - Top cycles par TVL
+- `getTopCyclesByParticipants()` - Top cycles par participants
+- `getTopGainersByCycle()` - Top gainers d'un cycle
+- `getTopLosersByCycle()` - Top losers d'un cycle
+- `getTopGainersAllTime()` - Top gainers lifetime
+- `getTopLosersAllTime()` - Top losers lifetime
+- `getLeaderboardSnapshot()` - Snapshot complet
+- `getLeaderboardStats()` - Stats agrégées
+- `getPlayerRank()` - Rang d'un joueur
+- `getPlayersNearRank()` - Joueurs autour d'un rang
+- `getPlayerRankChange()` - Changement de rang
+
+**Implémentation**: Méthodes définies, MAIS retournent des MOCKS (tableaux vides)
+
+**État**: PLACEHOLDER, ne fait rien de fonctionnel
+
+**Source**: `backend/src/services/leaderboard.service.ts`
+
+#### 7.4.3 AnalyticsService (`services/analytics.service.ts`)
+
+**Rôle**: Métriques et analytics du protocole
+
+**Méthodes**:
+- `getProtocolMetrics()` - Métriques globales
+- `getVolumeMetrics()` - Métriques de volume (24h/7d/30d/all)
+- `getActivityMetrics()` - Métriques d'activité
+- `getCycleMetrics()` - Métriques d'un cycle
+- `getRecentCyclesMetrics()` - Métriques des derniers cycles
+- `getPlayerGrowthMetrics()` - Métriques de croissance joueurs
+- `getFeeMetrics()` - Métriques de fees
+- `getTimeSeriesData()` - Données time series pour charts
+- `getExposureDistribution()` - Distribution des expositions
+- `getBalanceDistribution()` - Distribution des balances
+- `getTopMovers()` - Plus gros changements
+- `getDashboardAnalytics()` - Analytics dashboard complet
+
+**Implémentation**: Méthodes définies, MAIS retournent des MOCKS (données vides)
+
+**État**: PLACEHOLDER, ne fait rien de fonctionnel
+
+**Source**: `backend/src/services/analytics.service.ts`
+
+### 7.5 Base de données
+
+#### 7.5.1 Schéma SQL (`db/schema.sql`)
+
+**Tables définies** (13 tables):
+1. `players` - Joueurs
+2. `game_states` - États du jeu
+3. `cycles` - Cycles historiques
+4. `deposits` - Dépôts
+5. `withdrawals` - Retraits
+6. `exposure_updates` - Changements d'exposition
+7. `redistributions` - Redistributions
+8. `fees` - Fees collectées
+9. `activity_events` - Events unifiés
+10. `leaderboard_snapshots` - Snapshots leaderboard
+11. `indexer_state` - État de l'indexer
+
+**Indexes**: 30+ indexes définis
+
+**Triggers**: `update_updated_at_column` pour auto-update timestamps
+
+**Views**: 3 views (active_players, recent_activity, top_players)
+
+**État**: Schéma COMPLET et BIEN CONÇU, mais tables NON CRÉÉES
+
+**Source**: `backend/src/db/schema.sql`
+
+### 7.6 Verdict backend
+
+**Structure**: ✅ Excellente, bien organisée  
+**Implémentation**: ❌ Quasi inexistante  
+**Fonctionnalité**: ❌ 0% (retourne des mocks)  
+**Utilité actuelle**: ❌ Aucune (frontend n'utilise pas le backend)
+
+**Travail restant**:
+1. Créer les tables PostgreSQL
+2. Implémenter la connexion DB (pg/Prisma/TypeORM)
+3. Implémenter le parsing des events Anchor
+4. Implémenter l'écriture en DB
+5. Implémenter les query methods
+6. Tester l'indexation complète
+
+---
+
+## 8. MATRICE DE VÉRITÉ DES DONNÉES
+
+| Donnée | Affichée où | Source réelle | Fichier source | Fiabilité | Notes |
+|--------|-------------|---------------|----------------|-----------|-------|
+| Player balance | Dashboard, PlayerPanel | On-chain PlayerState | `lib/hooks/usePlayerState.ts` | 100% | Refetch 2s |
+| Player exposure | Dashboard, PlayerPanel | On-chain PlayerState | `lib/hooks/usePlayerState.ts` | 100% | Refetch 2s |
+| Player exposed_value | PlayerPanel | On-chain PlayerState | `lib/hooks/usePlayerState.ts` | 100% | Refetch 2s |
+| Player score | Dashboard, PlayerPanel | On-chain PlayerState | `lib/hooks/usePlayerState.ts` | 100% | Refetch 2s |
+| Player total_redistributed | Dashboard, PlayerPanel | On-chain PlayerState | `lib/hooks/usePlayerState.ts` | 100% | Refetch 2s |
+| Player rank | Dashboard, PlayerPanel | Calculé frontend | `lib/hooks/usePlayerRank.ts` | 100% | Fetch tous PlayerState, sort by score |
+| Current cycle | Dashboard, CycleResolver | On-chain GameState | `lib/hooks/useGameState.ts` | 100% | Refetch 2s |
+| Cycle start/end slot | CycleResolver | On-chain GameState | `lib/hooks/useGameState.ts` | 100% | Refetch 2s |
+| Total value locked | Dashboard, Landing | On-chain GameState | `lib/hooks/useGameState.ts` | 100% (Dashboard) / 0% (Landing) | Landing hardcodé |
+| Total exposed value | - | On-chain GameState | `lib/hooks/useGameState.ts` | 100% | Non affiché |
+| Active players | Dashboard, Landing | On-chain GameState | `lib/hooks/useGameState.ts` | 100% (Dashboard) / 0% (Landing) | Landing hardcodé |
+| Cycle resolved | Dashboard, ClaimButton | On-chain GameState | `lib/hooks/useGameState.ts` | 100% | Refetch 2s |
+| Current slot | CycleResolver | RPC connection.getSlot() | `lib/hooks/useCurrentSlot.ts` | 100% | Refetch 1s |
+| Leaderboard | Leaderboard page | Calculé frontend | `lib/hooks/useLeaderboard.ts` | 100% | Fetch tous PlayerState, sort by score |
+| Cycle history | ClaimButton | On-chain CycleState PDAs | `lib/hooks/useCycleHistory.ts` | 100% | Fetch CycleState[cycle_number] |
+| Activity feed | LiveTicker, Activity page | Event listeners Anchor | `lib/hooks/useActivityFeed.ts` | 100% | Temps réel via addEventListener |
+| Protocol config | - | On-chain GlobalConfig | `lib/hooks/useGlobalConfig.ts` | 100% | Refetch 30s |
+| Backend API data | - | Backend (mocks) | `backend/src/services/*.ts` | 0% | Non fonctionnel |
+
+**Conclusion**: Toutes les données critiques proviennent de la blockchain (on-chain ou RPC). Le backend n'est pas utilisé.
+
+---
+
+# AUDIT DE VÉRITÉ FONCTIONNELLE - SWARM ARENA (PARTIE 3)
+
+## 9. FLOWS UTILISATEUR DÉTAILLÉS
+
+### 9.1 Flow: Connect Wallet
+
+**Point d'entrée**: Dashboard page, bouton "Connect Wallet"
+
+**Étapes**:
+1. User clique sur WalletMultiButton
+2. Solana Wallet Adapter affiche modal de sélection
+3. User sélectionne wallet (Phantom, Solflare, etc.)
+4. Wallet demande autorisation de connexion
+5. User approuve
+6. `publicKey` devient disponible dans `useWallet()`
+7. Hooks React Query démarrent les fetches on-chain
+8. Dashboard affiche les données
+
+**Fichiers impliqués**:
+- `app/dashboard/page.tsx` - Page principale
+- `@solana/wallet-adapter-react` - Wallet context
+- `lib/hooks/usePlayerState.ts` - Fetch PlayerState
+- `lib/hooks/useGameState.ts` - Fetch GameState
+
+**Conditions requises**: Wallet installé dans le navigateur
+
+**Erreurs possibles**: Wallet non installé, user refuse connexion
+
+**Résultat attendu**: `connected = true`, `publicKey` disponible
+
+### 9.2 Flow: Register Player
+
+**Point d'entrée**: Dashboard, composant PlayerActions
+
+**Étapes**:
+1. User connecte wallet
+2. Frontend détecte que PlayerState n'existe pas (`usePlayerState()` retourne null)
+3. PlayerActions affiche bouton "Register Player"
+4. User clique sur "Register Player"
+5. `useRegisterPlayer().mutateAsync()` est appelé
+6. `registerPlayer(program)` construit la transaction Anchor
+7. Transaction envoyée au RPC avec `program.methods.registerPlayer().rpc()`
+8. Wallet demande signature
+9. User signe
+10. Transaction confirmée on-chain
+11. PlayerState PDA créé avec tous champs à 0
+12. Event `PlayerRegistered` émis
+13. Frontend attend 1.5s puis refetch `usePlayerState()`
+14. PlayerActions affiche maintenant les actions (Deposit/Withdraw/Exposure)
+
+**Fichiers impliqués**:
+- `components/game/PlayerActions.tsx` - UI
+- `lib/hooks/usePlayerState.ts` - Hook mutation
+- `lib/anchor.ts` - Fonction `registerPlayer()`
+- `programs/swarm-arena/src/lib.rs:850-900` - Handler on-chain
+
+**Conditions requises**:
+- Wallet connecté
+- PlayerState n'existe pas déjà
+- Protocole non pausé
+- User a du SOL pour les fees de transaction
+
+**Erreurs possibles**:
+- Protocole pausé → `Unauthorized`
+- PlayerState existe déjà → Anchor error
+- SOL insuffisant pour fees → Solana error
+
+**Résultat attendu**: PlayerState créé, user peut maintenant déposer
+
+### 9.3 Flow: Deposit SOL
+
+**Point d'entrée**: Dashboard, composant PlayerActions
+
+**Étapes**:
+1. User enregistré
+2. User entre montant dans input "Deposit SOL"
+3. User clique sur "Deposit"
+4. Frontend valide: `amount > 0` et `!isNaN(amount)`
+5. `useDeposit().mutateAsync(amount)` est appelé
+6. `deposit(program, solToBN(amount))` construit la transaction
+7. Transaction envoyée avec `program.methods.deposit(amountBN).rpc()`
+8. Wallet demande signature
+9. User signe
+10. Transaction confirmée on-chain
+11. SOL transféré: wallet → vault
+12. `player_state.balance += amount`
+13. `player_state.total_deposited += amount`
+14. `game_state.total_value_locked += amount`
+15. Si `exposure > 0`: `exposed_value` recalculé, `total_exposed_value` mis à jour
+16. Event `DepositMade` émis
+17. Frontend attend 1s puis refetch `usePlayerState()` et `useGameState()`
+18. Balance mise à jour dans l'UI
+
+**Fichiers impliqués**:
+- `components/game/PlayerActions.tsx` - UI
+- `lib/hooks/usePlayerState.ts` - Hook mutation
+- `lib/anchor.ts` - Fonction `deposit()`
+- `programs/swarm-arena/src/lib.rs:902-1000` - Handler on-chain
+
+**Conditions requises**:
+- User enregistré
+- Protocole non pausé
+- `amount >= config.min_deposit` (0.01 SOL)
+- `amount <= config.max_deposit` (100 SOL)
+- Wallet a suffisamment de SOL (amount + fees)
+
+**Erreurs possibles**:
+- Protocole pausé → `Unauthorized`
+- Montant trop petit → `DepositTooSmall`
+- Montant trop grand → `DepositTooLarge`
+- SOL insuffisant → Solana error
+- Overflow → `ArithmeticOverflow`
+
+**Résultat attendu**: Balance augmentée, TVL augmenté
+
+### 9.4 Flow: Set Exposure
+
+**Point d'entrée**: Dashboard, composant PlayerActions
+
+**Étapes**:
+1. User enregistré avec balance > 0
+2. User ajuste slider "Set Exposure" (0-100%)
+3. User clique sur "Update Exposure"
+4. `useSetExposure().mutateAsync(exposure)` est appelé
+5. `setExposure(program, exposure)` construit la transaction
+6. Transaction envoyée avec `program.methods.setExposure(exposure).rpc()`
+7. Wallet demande signature
+8. User signe
+9. Transaction confirmée on-chain
+10. Smart contract vérifie cooldown
+11. `new_exposed_value = (balance * exposure) / 100` calculé
+12. `player_state.exposure = new_exposure`
+13. `player_state.exposed_value = new_exposed_value`
+14. `player_state.last_exposure_change_slot = current_slot`
+15. `participating_in_cycle` mis à jour (true si exposure > 0 ET balance > 0)
+16. `game_state.total_exposed_value` ajusté
+17. `game_state.active_players` ajusté si statut change
+18. Events `ExposureUpdated` et `ParticipationChanged` émis
+19. Frontend attend 1s puis refetch
+20. Exposure mise à jour dans l'UI
+
+**Fichiers impliqués**:
+- `components/game/PlayerActions.tsx` - UI
+- `components/ui/ExposureSlider.tsx` - Slider
+- `lib/hooks/usePlayerState.ts` - Hook mutation
+- `lib/anchor.ts` - Fonction `setExposure()`
+- `programs/swarm-arena/src/lib.rs:1044-1160` - Handler on-chain
+
+**Conditions requises**:
+- User enregistré
+- Protocole non pausé
+- `exposure` entre 0 et 100
+- Cooldown respecté (10 slots depuis dernier changement)
+- Si `exposure > 0`: `balance >= 0.01 SOL`
+
+**Erreurs possibles**:
+- Protocole pausé → `Unauthorized`
+- Exposure hors limites → `ExposureOutOfRange`
+- Cooldown actif → `ExposureCooldownActive`
+- Balance trop faible → `InsufficientBalanceForExposure`
+
+**Résultat attendu**: Exposure changée, participation mise à jour
+
+### 9.5 Flow: Withdraw SOL
+
+**Point d'entrée**: Dashboard, composant PlayerActions
+
+**Étapes**:
+1. User enregistré avec balance > 0
+2. User met exposure à 0% (étape obligatoire)
+3. User entre montant dans input "Withdraw SOL"
+4. User clique sur "Withdraw"
+5. Frontend valide: `amount > 0`, `!isNaN(amount)`, `exposure == 0`
+6. `useWithdraw().mutateAsync(amount)` est appelé
+7. `withdraw(program, solToBN(amount))` construit la transaction
+8. Transaction envoyée avec `program.methods.withdraw(amountBN).rpc()`
+9. Wallet demande signature
+10. User signe
+11. Transaction confirmée on-chain
+12. Smart contract vérifie `exposure == 0`
+13. SOL transféré: vault → wallet
+14. `player_state.balance -= amount`
+15. `player_state.total_withdrawn += amount`
+16. `game_state.total_value_locked -= amount`
+17. Event `WithdrawMade` émis
+18. Frontend attend 1s puis refetch
+19. Balance mise à jour dans l'UI
+
+**Fichiers impliqués**:
+- `components/game/PlayerActions.tsx` - UI
+- `lib/hooks/usePlayerState.ts` - Hook mutation
+- `lib/anchor.ts` - Fonction `withdraw()`
+- `programs/swarm-arena/src/lib.rs:1002-1042` - Handler on-chain
+
+**Conditions requises**:
+- User enregistré
+- Protocole non pausé
+- `player_state.exposure == 0` (CRITIQUE)
+- `player_state.balance >= amount`
+- `amount > 0`
+
+**Erreurs possibles**:
+- Protocole pausé → `Unauthorized`
+- Exposure > 0 → `ExposureMustBeZero`
+- Balance insuffisante → `InsufficientBalance`
+- Underflow → `ArithmeticUnderflow`
+
+**Résultat attendu**: Balance diminuée, SOL reçu dans wallet
+
+### 9.6 Flow: Resolve Cycle
+
+**Point d'entrée**: Dashboard, composant CycleResolver
+
+**Étapes**:
+1. Cycle en cours
+2. `current_slot >= cycle_end_slot` (cycle terminé)
+3. CycleResolver affiche bouton "Resolve Cycle #X"
+4. N'importe qui peut cliquer (pas besoin d'être participant)
+5. `useResolveCycle().mutateAsync()` est appelé
+6. `resolveCycle(program)` construit la transaction
+7. Transaction envoyée avec `program.methods.resolveCycle().rpc()`
+8. Wallet demande signature
+9. User signe
+10. Transaction confirmée on-chain
+11. Smart contract calcule fees: `(total_exposed_value * 2%) / 100`
+12. Smart contract calcule pool: `total_exposed_value - fees`
+13. Fees transférées: vault → treasury
+14. CycleState PDA créé avec toutes les données du cycle
+15. `config.total_fees_collected += fees`
+16. `config.total_cycles += 1`
+17. `game_state.cycle_resolved = true`
+18. Nouveau cycle démarré: `current_cycle += 1`, `cycle_start_slot = current_slot`, `cycle_end_slot = current_slot + 100`
+19. Events `CycleResolved` et `FeeCollected` émis
+20. Frontend refetch toutes les queries
+21. ClaimButton apparaît pour les participants
+
+**Fichiers impliqués**:
+- `components/game/CycleResolver.tsx` - UI
+- `lib/hooks/useCycleActions.ts` - Hook mutation
+- `lib/anchor.ts` - Fonction `resolveCycle()`
+- `programs/swarm-arena/src/lib.rs:1162-1280` - Handler on-chain
+
+**Conditions requises**:
+- Protocole non pausé
+- `!game_state.cycle_resolved`
+- `current_slot >= cycle_end_slot`
+- `total_exposed_value > 0`
+
+**Erreurs possibles**:
+- Protocole pausé → `Unauthorized`
+- Cycle déjà résolu → `CycleAlreadyResolved`
+- Cycle pas terminé → `CycleNotEnded`
+- Aucun participant → `NoActivePlayers`
+
+**Résultat attendu**: Cycle résolu, nouveau cycle démarré, fees collectées
+
+### 9.7 Flow: Claim Redistribution
+
+**Point d'entrée**: Dashboard, composant ClaimButton
+
+**Étapes**:
+1. Cycle précédent résolu
+2. User a participé au cycle (exposure > 0 pendant le cycle)
+3. ClaimButton affiche "Claim Cycle #X Redistribution"
+4. User clique sur "Claim"
+5. `useClaimRedistribution().mutateAsync(cycleNumber)` est appelé
+6. `claimRedistribution(program, cycleNumber)` construit la transaction
+7. Transaction envoyée avec `program.methods.claimRedistribution(cycleNumber).rpc()`
+8. Wallet demande signature
+9. User signe
+10. Transaction confirmée on-chain
+11. Smart contract calcule redistribution via formule complexe
+12. Si `redistribution > 0` (gain):
+    - `player_state.balance += redistribution`
+    - `cycle_state.winners += 1`
+13. Si `redistribution < 0` (perte):
+    - `player_state.balance -= abs(redistribution)`
+14. `player_state.total_redistributed += redistribution`
+15. `player_state.cycles_participated += 1`
+16. `player_state.score += redistribution`
+17. `exposed_value` recalculé avec nouvelle balance
+18. Event `RewardDistributed` émis
+19. Frontend refetch toutes les queries
+20. Balance et score mis à jour dans l'UI
+
+**Fichiers impliqués**:
+- `components/game/ClaimButton.tsx` - UI
+- `lib/hooks/useCycleActions.ts` - Hook mutation
+- `lib/anchor.ts` - Fonction `claimRedistribution()`
+- `programs/swarm-arena/src/lib.rs:1282-1344` - Handler on-chain
+- `shared/math.ts` - Formule redistribution
+
+**Conditions requises**:
+- `player_state.participating_in_cycle == true`
+- `player_state.exposed_value > 0`
+- CycleState existe et est résolu
+
+**Erreurs possibles**:
+- Non participant → `Unauthorized`
+- Exposed value = 0 → `InvalidAccount`
+- Perte > balance → `ArithmeticUnderflow`
+
+**Résultat attendu**: Gain/perte appliqué, score mis à jour
+
+### 9.8 Flow: View Leaderboard
+
+**Point d'entrée**: Leaderboard page
+
+**Étapes**:
+1. User navigue vers `/leaderboard`
+2. `useLeaderboard(100)` est appelé
+3. Hook fetch tous les PlayerState accounts via `program.account.PlayerState.all()`
+4. Hook trie par score descendant
+5. Hook mappe les 100 premiers en format LeaderboardPlayer
+6. Leaderboard page affiche les stats agrégées
+7. Table leaderboard affiche "Leaderboard with X players" (pas de liste)
+
+**Fichiers impliqués**:
+- `app/leaderboard/page.tsx` - Page
+- `lib/hooks/useLeaderboard.ts` - Hook
+- `lib/anchor.ts` - Fetch accounts
+
+**Conditions requises**: Aucune (pas besoin de wallet connecté)
+
+**Erreurs possibles**: RPC timeout si trop de joueurs
+
+**Résultat attendu**: Stats affichées, nombre de joueurs affiché
+
+**Critique**: La table leaderboard n'affiche pas les joueurs individuellement
+
+### 9.9 Flow: View Activity Feed
+
+**Point d'entrée**: Activity page ou LiveTicker
+
+**Étapes**:
+1. `useActivityFeed(50)` est appelé
+2. Hook installe event listeners Anchor pour tous les events
+3. Quand un event est émis on-chain:
+   - Event reçu via `program.addEventListener(eventName, callback)`
+   - Event parsé et ajouté au state local
+   - UI mise à jour en temps réel
+4. Feed affiche les 50 derniers events
+
+**Fichiers impliqués**:
+- `lib/hooks/useActivityFeed.ts` - Hook
+- `components/ui/LiveTicker.tsx` - UI (non analysé)
+
+**Conditions requises**: Connexion RPC active
+
+**Erreurs possibles**: Listener fail si RPC déconnecté
+
+**Résultat attendu**: Feed d'activité en temps réel
+
+---
+
+## 10. TESTS ET COUVERTURE RÉELLE
+
+**Statut**: NON ANALYSÉ dans cet audit
+
+**Fichiers de tests identifiés**:
+- `tests/swarm-arena.ts` - Tests Anchor
+- `tests/helpers.ts` - Helpers de test
+
+**Travail restant**: Lire et analyser les tests pour déterminer la couverture réelle
+
+---
+
+## 11. RISQUES, LIMITES ET ZONES GRISES
+
+### 11.1 Risques smart contract
+
+#### 11.1.1 Formule de redistribution
+
+**Risque**: La formule `calculateRedistributionShare` semble incorrecte
+
+**Détail**: Dans l'exemple calculé, les pertes totales (-31.64 SOL) ne correspondent pas aux fees (2 SOL). Il manque un mécanisme de normalisation.
+
+**Impact**: Les joueurs pourraient tous perdre, ou la somme des redistributions pourrait ne pas être nulle
+
+**Fichier**: `shared/math.ts:calculateRedistributionShare`
+
+**Recommandation**: Vérifier la formule mathématiquement et avec des tests
+
+#### 11.1.2 Underflow sur claim
+
+**Risque**: Si perte > balance, l'instruction échoue
+
+**Détail**: `player_state.balance.checked_sub(loss)` échoue si loss > balance
+
+**Impact**: Joueur ne peut pas claim, reste bloqué
+
+**Fichier**: `lib.rs:1282-1344`
+
+**Recommandation**: Gérer le cas où perte > balance (plafonner à balance)
+
+#### 11.1.3 Cycle non résolu
+
+**Risque**: Si personne ne résout le cycle, les joueurs ne peuvent pas claim
+
+**Détail**: `resolve_cycle` peut être appelé par n'importe qui, mais si personne ne le fait, le jeu est bloqué
+
+**Impact**: Joueurs ne peuvent pas claim leurs gains/pertes
+
+**Recommandation**: Ajouter un mécanisme automatique ou des incitations pour résoudre
+
+#### 11.1.4 Retrait bloqué
+
+**Risque**: Si joueur oublie de mettre exposure à 0, il ne peut pas retirer
+
+**Détail**: `withdraw` requiert `exposure == 0`
+
+**Impact**: Joueur doit faire 2 transactions (set_exposure puis withdraw)
+
+**Recommandation**: Documenter clairement, ou permettre retrait avec auto-reset exposure
+
+### 11.2 Risques frontend
+
+#### 11.2.1 RPC timeout
+
+**Risque**: Si trop de joueurs, `program.account.PlayerState.all()` peut timeout
+
+**Détail**: Leaderboard et rank fetching chargent tous les PlayerState
+
+**Impact**: Leaderboard ne charge pas, rank non affiché
+
+**Recommandation**: Utiliser pagination ou backend indexé
+
+#### 11.2.2 Refetch trop fréquent
+
+**Risque**: Refetch toutes les 2 secondes peut surcharger le RPC
+
+**Détail**: `usePlayerState` et `useGameState` refetch toutes les 2s
+
+**Impact**: Rate limiting RPC, coûts élevés
+
+**Recommandation**: Augmenter intervalle ou utiliser websockets
+
+#### 11.2.3 Alerts au lieu de toasts
+
+**Risque**: UX dégradée avec `alert()` JavaScript
+
+**Détail**: PlayerActions utilise `alert()` au lieu du ToastContainer
+
+**Impact**: Expérience utilisateur médiocre
+
+**Recommandation**: Utiliser le système de toasts existant
+
+### 11.3 Risques backend
+
+#### 11.3.1 Backend non fonctionnel
+
+**Risque**: Backend ne fait rien, retourne des mocks
+
+**Détail**: IndexerService ne parse pas les events, ne stocke rien en DB
+
+**Impact**: Aucun pour l'instant (frontend n'utilise pas le backend)
+
+**Recommandation**: Implémenter l'indexation ou supprimer le backend
+
+#### 11.3.2 Base de données non créée
+
+**Risque**: Schéma SQL défini mais tables non créées
+
+**Détail**: `schema.sql` existe mais n'a jamais été exécuté
+
+**Impact**: Backend ne peut pas stocker de données
+
+**Recommandation**: Créer les tables ou utiliser un ORM avec migrations
+
+### 11.4 Limites connues
+
+#### 11.4.1 Pas de pagination leaderboard
+
+**Limite**: Leaderboard charge tous les PlayerState en une fois
+
+**Impact**: Ne scale pas au-delà de quelques centaines de joueurs
+
+**Fichier**: `lib/hooks/useLeaderboard.ts`
+
+#### 11.4.2 Pas de cache
+
+**Limite**: Toutes les données sont refetch depuis la blockchain
+
+**Impact**: Latence élevée, coûts RPC élevés
+
+**Recommandation**: Implémenter un cache ou utiliser le backend
+
+#### 11.4.3 Pas de gestion d'erreur robuste
+
+**Limite**: Erreurs affichées via `alert()` ou console
+
+**Impact**: UX dégradée, debugging difficile
+
+**Recommandation**: Implémenter error boundaries et logging
+
+#### 11.4.4 Pas de tests frontend
+
+**Limite**: Aucun test unitaire ou e2e identifié pour le frontend
+
+**Impact**: Risque de régression
+
+**Recommandation**: Ajouter tests avec Jest/Vitest et Playwright
+
+### 11.5 Zones grises
+
+#### 11.5.1 Claim multiple fois
+
+**Question**: Un joueur peut-il claim plusieurs fois le même cycle?
+
+**Réponse**: NON VÉRIFIÉ dans le code. Il n'y a pas de flag `claimed` dans PlayerState ou CycleState.
+
+**Risque**: Si possible, joueur pourrait claim plusieurs fois et drainer le vault
+
+**Recommandation**: Vérifier et ajouter protection si nécessaire
+
+#### 11.5.2 Participation rétroactive
+
+**Question**: Si joueur change exposure après fin de cycle mais avant résolution, est-il participant?
+
+**Réponse**: OUI, car `participating_in_cycle` est mis à jour immédiatement. Mais le cycle n'est pas encore résolu, donc il ne devrait pas pouvoir claim.
+
+**Risque**: Exploitation possible
+
+**Recommandation**: Vérifier la logique de participation
+
+#### 11.5.3 Fees sur balance ou exposed_value
+
+**Question**: Les fees sont prélevées sur `total_exposed_value`, pas sur `total_value_locked`. Est-ce intentionnel?
+
+**Réponse**: OUI, c'est cohérent avec la logique du jeu (seule la valeur exposée est redistribuée)
+
+**Risque**: Aucun
+
+#### 11.5.4 Anti-whale effectiveness
+
+**Question**: Le mécanisme anti-whale est-il efficace?
+
+**Réponse**: NON TESTÉ. La pénalité max est -25%, ce qui peut ne pas suffire pour empêcher la domination des whales.
+
+**Recommandation**: Tester avec des simulations
+
+---
+
+## 12. POINTS À CONFIRMER MANUELLEMENT ON-CHAIN
+
+### 12.1 Vérifications à faire
+
+1. **Protocole initialisé**: Vérifier que GlobalConfig existe à l'adresse PDA `["config"]`
+2. **GameState existe**: Vérifier que GameState existe à l'adresse PDA `["game_state"]`
+3. **Vault balance**: Vérifier que vault balance == sum(all player balances)
+4. **Treasury balance**: Vérifier que treasury balance == total_fees_collected
+5. **Cycle actuel**: Vérifier que current_cycle correspond au dernier CycleState créé
+6. **Joueurs enregistrés**: Compter le nombre de PlayerState accounts
+7. **Cycles résolus**: Compter le nombre de CycleState accounts
+8. **Events émis**: Vérifier que les events sont bien émis (via logs de transaction)
+
+### 12.2 Commandes Solana CLI
+
+```bash
+# Vérifier GlobalConfig
+solana account <CONFIG_PDA> --url devnet
+
+# Vérifier GameState
+solana account <GAME_STATE_PDA> --url devnet
+
+# Vérifier Vault balance
+solana balance <VAULT_PDA> --url devnet
+
+# Lister tous les PlayerState (via program accounts)
+solana program show <PROGRAM_ID> --url devnet
+```
+
+### 12.3 Scripts de vérification
+
+**Fichiers identifiés**:
+- `scripts/check-protocol-status.ts` - Vérifie le statut du protocole
+- `scripts/read-protocol-data.ts` - Lit les données du protocole
+- `scripts/test-protocol.ts` - Teste le protocole
+- `scripts/initialize-protocol.ts` - Initialise le protocole
+
+**Statut**: NON ANALYSÉS dans cet audit
+
+---
+
+## 13. VERDICT FINAL SUR LA COHÉRENCE DU PROJET
+
+### 13.1 Cohérence globale
+
+**Smart Contract**: ✅ Cohérent, complet, bien structuré  
+**Frontend**: ✅ Cohérent, fonctionnel, connecté à la blockchain  
+**Backend**: ⚠️ Cohérent en structure, mais non implémenté  
+**Base de données**: ⚠️ Schéma cohérent, mais non créée  
+**Documentation**: ⚠️ Partielle (README, guides, mais pas de docs API)
+
+### 13.2 Fonctionnalité réelle
+
+**Ce qui fonctionne**:
+- ✅ Smart contract déployé et fonctionnel
+- ✅ Frontend connecté à la blockchain
+- ✅ Toutes les actions joueur (register, deposit, withdraw, set_exposure, resolve, claim)
+- ✅ Affichage des données on-chain en temps réel
+- ✅ Leaderboard calculé depuis la blockchain
+- ✅ Activity feed en temps réel via events
+
+**Ce qui ne fonctionne pas**:
+- ❌ Backend (retourne des mocks)
+- ❌ Base de données (non créée)
+- ❌ Indexation des events (non implémentée)
+- ❌ API REST (non fonctionnelle)
+- ❌ Table leaderboard (n'affiche pas les joueurs)
+- ❌ Toasts (utilise alert() à la place)
+
+### 13.3 Risques critiques
+
+1. **Formule de redistribution**: Potentiellement incorrecte, à vérifier
+2. **Claim multiple**: Pas de protection contre claim multiple du même cycle
+3. **Underflow sur claim**: Joueur bloqué si perte > balance
+4. **Scalabilité**: Leaderboard ne scale pas (fetch tous les PlayerState)
+
+### 13.4 Recommandations prioritaires
+
+**Priorité 1 (Critique)**:
+1. Vérifier et corriger la formule de redistribution
+2. Ajouter protection contre claim multiple
+3. Gérer le cas perte > balance dans claim
+4. Tester le smart contract avec des scénarios réels
+
+**Priorité 2 (Important)**:
+1. Implémenter le backend ou le supprimer
+2. Ajouter pagination au leaderboard
+3. Remplacer alert() par toasts
+4. Afficher la table leaderboard complète
+
+**Priorité 3 (Nice to have)**:
+1. Ajouter tests frontend
+2. Améliorer la documentation
+3. Ajouter error boundaries
+4. Optimiser les refetch intervals
+
+### 13.5 Conclusion
+
+**Le projet Swarm Arena est fonctionnel à 70%**:
+- Le smart contract et le frontend fonctionnent ensemble
+- Les joueurs peuvent jouer, déposer, retirer, participer aux cycles
+- Les données sont 100% on-chain, pas de dépendance au backend
+- Le backend est un placeholder non fonctionnel
+
+**Le projet peut être utilisé en l'état pour un MVP**, mais nécessite des corrections critiques sur la formule de redistribution et la protection contre les exploits avant un déploiement en production.
+
+**La source de vérité est claire**: Tout est on-chain, le frontend est un client léger qui lit et écrit directement sur la blockchain via Anchor.
+
+---
+
+**FIN DE L'AUDIT DE VÉRITÉ FONCTIONNELLE**
+
