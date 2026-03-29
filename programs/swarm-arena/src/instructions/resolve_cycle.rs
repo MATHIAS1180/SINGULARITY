@@ -146,7 +146,13 @@ pub fn handler(ctx: Context<ResolveCycle>) -> Result<()> {
     game_state.cycle_start_slot = next_cycle_start;
     game_state.cycle_end_slot = next_cycle_end;
     game_state.cycle_resolved = false;
-    // Note: TVL and exposed values remain, players keep their exposure settings
+    
+    // Reset participation counters for next cycle
+    // Note: Players keep their exposure settings and balances
+    // They will be marked as participating again when they interact or claim
+    game_state.active_players = 0;
+    game_state.total_exposed_value = 0;
+    // Note: TVL is NOT reset - players keep their balances
 
     // Emit cycle resolved event
     emit!(CycleResolved {
@@ -243,6 +249,12 @@ pub fn claim_redistribution_handler(
     let player_state = &mut ctx.accounts.player_state;
     let clock = Clock::get()?;
 
+    // Prevent double claim - CRITICAL SECURITY CHECK
+    require!(
+        player_state.last_claimed_cycle < cycle_number,
+        SwarmArenaError::CycleAlreadyResolved
+    );
+
     // Verify player participated in this cycle
     require!(
         player_state.participating_in_cycle,
@@ -296,6 +308,12 @@ pub fn claim_redistribution_handler(
         .checked_add(redistribution)
         .ok_or(SwarmArenaError::ArithmeticOverflow)?;
     player_state.last_action_slot = clock.slot;
+
+    // Mark this cycle as claimed to prevent double claims
+    player_state.last_claimed_cycle = cycle_number;
+
+    // Reset participation flag after claiming (ready for next cycle)
+    player_state.participating_in_cycle = false;
 
     // Recalculate exposed value for next cycle
     player_state.exposed_value = math::calculate_exposed_value(

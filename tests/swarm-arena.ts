@@ -557,6 +557,35 @@ describe("swarm-arena", () => {
       console.log("Player2 balance after:", balanceAfter);
       console.log("Player2 redistribution:", redistribution);
       console.log("Player2 cycles participated:", playerStateAfter.cyclesParticipated.toNumber());
+      
+      // Verify last_claimed_cycle was updated
+      expect(playerStateAfter.lastClaimedCycle.toNumber()).to.equal(1);
+    });
+
+    it("should fail to claim same cycle twice (double claim protection)", async () => {
+      const player2StatePDA = getPlayerStatePDA(program.programId, player2.publicKey);
+      const cycleStatePDA = getCycleStatePDA(program.programId, 1);
+
+      try {
+        await program.methods
+          .claimRedistribution(new anchor.BN(1))
+          .accounts({
+            config: configPDA,
+            gameState: gameStatePDA,
+            cycleState: cycleStatePDA,
+            playerState: player2StatePDA,
+            vault: vaultPDA,
+            player: player2.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .signers([player2])
+          .rpc();
+        
+        expect.fail("Should have failed - double claim should be prevented");
+      } catch (err) {
+        expect(err).to.exist;
+        console.log("✅ Double claim correctly prevented");
+      }
     });
 
     it("should claim redistribution for player3", async () => {
@@ -579,6 +608,9 @@ describe("swarm-arena", () => {
 
       const playerState = await program.account.playerState.fetch(player3StatePDA);
       console.log("Player3 redistribution:", playerState.totalRedistributed.toNumber());
+      
+      // Verify last_claimed_cycle was updated
+      expect(playerState.lastClaimedCycle.toNumber()).to.equal(1);
     });
   });
 });

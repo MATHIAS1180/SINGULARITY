@@ -12,15 +12,22 @@ export function useProtocolInitialized() {
   return useQuery({
     queryKey: ['protocolInitialized'],
     queryFn: async () => {
-      if (!program) throw new Error('Program not initialized');
+      if (!program) {
+        console.log('❌ useProtocolInitialized: No program');
+        throw new Error('Program not initialized');
+      }
       try {
-        await fetchGlobalConfig(program);
+        const config = await fetchGlobalConfig(program);
+        console.log('✅ useProtocolInitialized: Protocol is initialized', config);
         return true;
-      } catch {
+      } catch (error) {
+        console.log('❌ useProtocolInitialized: Failed to fetch config', error);
         return false;
       }
     },
     enabled: !!program,
     refetchInterval: 30000, // Refetch every 30 seconds
+    retry: 3,
+    retryDelay: 1000,
   });
 }

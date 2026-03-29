@@ -162,6 +162,8 @@ pub struct PlayerState {
     pub registered_slot: u64,
     /// Player rank/score (for leaderboard)
     pub score: i64,
+    /// Last cycle claimed (prevents double claims)
+    pub last_claimed_cycle: u64,
     /// Bump seed for PDA
     pub bump: u8,
 }
@@ -181,6 +183,7 @@ impl PlayerState {
         1 + // participating_in_cycle
         8 + // registered_slot
         8 + // score (i64)
+        8 + // last_claimed_cycle
         1; // bump
 }
 

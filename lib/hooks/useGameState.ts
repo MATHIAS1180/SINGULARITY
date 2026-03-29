@@ -17,7 +17,8 @@ export function useGameState() {
       return fetchGameState(program);
     },
     enabled: !!program,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 2000, // Refetch every 2 seconds
+    staleTime: 1000, // Consider data stale after 1 second
   });
 }
 

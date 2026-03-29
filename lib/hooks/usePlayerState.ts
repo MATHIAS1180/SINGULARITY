@@ -34,7 +34,8 @@ export function usePlayerState() {
       return fetchPlayerState(program, publicKey);
     },
     enabled: !!program && !!publicKey,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 2000, // Refetch every 2 seconds
+    staleTime: 1000, // Consider data stale after 1 second
   });
 }
 
@@ -49,11 +50,21 @@ export function useRegisterPlayer() {
   return useMutation({
     mutationFn: async () => {
       if (!program) throw new Error('Program not initialized');
-      return registerPlayer(program);
+      
+      const signature = await registerPlayer(program);
+      
+      // Wait for transaction confirmation
+      await program.provider.connection.confirmTransaction(signature, 'confirmed');
+      
+      return signature;
     },
-    onSuccess: () => {
-      // Invalidate player state to refetch
-      queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
+    onSuccess: async () => {
+      // Wait a bit for the blockchain to update
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Force refetch player state
+      await queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
+      await queryClient.refetchQueries({ queryKey: ['playerState', publicKey?.toString()] });
     },
   });
 }
@@ -70,12 +81,22 @@ export function useDeposit() {
     mutationFn: async (amountSol: number) => {
       if (!program) throw new Error('Program not initialized');
       const amountBN = solToBN(amountSol);
-      return deposit(program, amountBN);
+      const signature = await deposit(program, amountBN);
+      
+      // Wait for transaction confirmation
+      await program.provider.connection.confirmTransaction(signature, 'confirmed');
+      
+      return signature;
     },
-    onSuccess: () => {
-      // Invalidate queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
-      queryClient.invalidateQueries({ queryKey: ['gameState'] });
+    onSuccess: async () => {
+      // Wait a bit for the blockchain to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Force refetch
+      await queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
+      await queryClient.invalidateQueries({ queryKey: ['gameState'] });
+      await queryClient.refetchQueries({ queryKey: ['playerState', publicKey?.toString()] });
+      await queryClient.refetchQueries({ queryKey: ['gameState'] });
     },
   });
 }
@@ -92,12 +113,22 @@ export function useWithdraw() {
     mutationFn: async (amountSol: number) => {
       if (!program) throw new Error('Program not initialized');
       const amountBN = solToBN(amountSol);
-      return withdraw(program, amountBN);
+      const signature = await withdraw(program, amountBN);
+      
+      // Wait for transaction confirmation
+      await program.provider.connection.confirmTransaction(signature, 'confirmed');
+      
+      return signature;
     },
-    onSuccess: () => {
-      // Invalidate queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
-      queryClient.invalidateQueries({ queryKey: ['gameState'] });
+    onSuccess: async () => {
+      // Wait a bit for the blockchain to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Force refetch
+      await queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
+      await queryClient.invalidateQueries({ queryKey: ['gameState'] });
+      await queryClient.refetchQueries({ queryKey: ['playerState', publicKey?.toString()] });
+      await queryClient.refetchQueries({ queryKey: ['gameState'] });
     },
   });
 }
@@ -113,12 +144,22 @@ export function useSetExposure() {
   return useMutation({
     mutationFn: async (newExposure: number) => {
       if (!program) throw new Error('Program not initialized');
-      return setExposure(program, newExposure);
+      const signature = await setExposure(program, newExposure);
+      
+      // Wait for transaction confirmation
+      await program.provider.connection.confirmTransaction(signature, 'confirmed');
+      
+      return signature;
     },
-    onSuccess: () => {
-      // Invalidate queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
-      queryClient.invalidateQueries({ queryKey: ['gameState'] });
+    onSuccess: async () => {
+      // Wait a bit for the blockchain to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Force refetch
+      await queryClient.invalidateQueries({ queryKey: ['playerState', publicKey?.toString()] });
+      await queryClient.invalidateQueries({ queryKey: ['gameState'] });
+      await queryClient.refetchQueries({ queryKey: ['playerState', publicKey?.toString()] });
+      await queryClient.refetchQueries({ queryKey: ['gameState'] });
     },
   });
 }

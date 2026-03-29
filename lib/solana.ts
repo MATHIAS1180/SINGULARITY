@@ -10,7 +10,7 @@ import { AnchorProvider, Program, Idl } from '@coral-xyz/anchor';
 import { AnchorWallet } from '@solana/wallet-adapter-react';
 
 // Program ID from declare_id! in lib.rs
-export const PROGRAM_ID = new PublicKey('A9W89qV4i21ZCmFTLYZZE3HgwnqimWEFjGd3rowYcZpr');
+export const PROGRAM_ID = new PublicKey('FbSDMGKyTo1YYGMjtau1JLBUDh18koz1JKN3NL38Zmf3');
 
 // Cluster configuration
 export type SolanaCluster = 'devnet' | 'testnet' | 'mainnet-beta' | 'localnet';

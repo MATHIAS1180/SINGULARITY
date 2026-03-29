@@ -19,7 +19,7 @@ export const PROTOCOL_VERSION = '1.0.0' as const;
 export const PROTOCOL_INFO = {
   name: 'Swarm Arena',
   version: PROTOCOL_VERSION,
-  programId: 'A9W89qV4i21ZCmFTLYZZE3HgwnqimWEFjGd3rowYcZpr',
+  programId: 'FbSDMGKyTo1YYGMjtau1JLBUDh18koz1JKN3NL38Zmf3',
 } as const;
 
 // ============================================================================

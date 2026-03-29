@@ -508,6 +508,10 @@ export type SwarmArena = {
             "type": "i64"
           },
           {
+            "name": "lastClaimedCycle",
+            "type": "u64"
+          },
+          {
             "name": "bump",
             "type": "u8"
           }

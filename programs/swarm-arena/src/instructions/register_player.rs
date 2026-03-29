@@ -48,6 +48,7 @@ pub fn handler(ctx: Context<RegisterPlayer>) -> Result<()> {
     player_state.participating_in_cycle = false;
     player_state.registered_slot = clock.slot;
     player_state.score = 0;
+    player_state.last_claimed_cycle = 0;
     player_state.bump = ctx.bumps.player_state;
 
     // Emit registration event

@@ -130,7 +130,7 @@ function loadConfig(): Config {
   const rpcEndpoint = getRpcEndpoint(cluster);
   const programId = getEnv(
     'PROGRAM_ID',
-    'A9W89qV4i21ZCmFTLYZZE3HgwnqimWEFjGd3rowYcZpr'
+    'FbSDMGKyTo1YYGMjtau1JLBUDh18koz1JKN3NL38Zmf3'
   );
 
   // Validate program ID

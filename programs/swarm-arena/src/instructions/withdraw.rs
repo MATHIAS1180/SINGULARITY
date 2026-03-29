@@ -93,6 +93,9 @@ pub fn handler(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         .ok_or(SwarmArenaError::ArithmeticOverflow)?;
     player_state.last_action_slot = clock.slot;
 
+    // Save old exposed value BEFORE recalculation
+    let old_exposed_value = player_state.exposed_value;
+
     // Recalculate exposed value (should be 0 if withdrawal is allowed)
     player_state.exposed_value = math::calculate_exposed_value(
         player_state.balance,
@@ -104,6 +107,19 @@ pub fn handler(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         .total_value_locked
         .checked_sub(amount)
         .ok_or(SwarmArenaError::ArithmeticUnderflow)?;
+
+    // Update global exposed value if player was participating
+    // Subtract the DIFFERENCE between old and new exposed values
+    if player_state.participating_in_cycle && old_exposed_value > 0 {
+        let exposed_diff = old_exposed_value
+            .checked_sub(player_state.exposed_value)
+            .ok_or(SwarmArenaError::ArithmeticUnderflow)?;
+        
+        game_state.total_exposed_value = game_state
+            .total_exposed_value
+            .checked_sub(exposed_diff)
+            .ok_or(SwarmArenaError::ArithmeticUnderflow)?;
+    }
 
     game_state.last_update_slot = clock.slot;
 

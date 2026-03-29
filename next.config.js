@@ -45,7 +45,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_SOLANA_NETWORK: process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet',
     NEXT_PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com',
-    NEXT_PUBLIC_PROGRAM_ID: process.env.NEXT_PUBLIC_PROGRAM_ID || 'A9W89qV4i21ZCmFTLYZZE3HgwnqimWEFjGd3rowYcZpr',
+    NEXT_PUBLIC_PROGRAM_ID: process.env.NEXT_PUBLIC_PROGRAM_ID || 'FbSDMGKyTo1YYGMjtau1JLBUDh18koz1JKN3NL38Zmf3',
   },
 };
 

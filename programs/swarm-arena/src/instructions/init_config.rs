@@ -33,6 +33,14 @@ pub struct InitializeConfig<'info> {
     )]
     pub treasury_vault: Account<'info, TreasuryVault>,
 
+    /// CHECK: PDA vault that holds player funds - initialized as system account
+    #[account(
+        mut,
+        seeds = [b"vault"],
+        bump
+    )]
+    pub vault: AccountInfo<'info>,
+
     #[account(mut)]
     pub authority: Signer<'info>,
 
@@ -111,6 +119,20 @@ pub fn handler(
     treasury_vault.balance = 0;
     treasury_vault.last_withdrawal_slot = 0;
     treasury_vault.bump = ctx.bumps.treasury_vault;
+
+    // Initialize Vault PDA (player funds vault)
+    // Transfer minimum rent to make it rent-exempt
+    let vault_rent = Rent::get()?.minimum_balance(0);
+    if vault_rent > 0 {
+        let transfer_ctx = CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.authority.to_account_info(),
+                to: ctx.accounts.vault.to_account_info(),
+            },
+        );
+        transfer(transfer_ctx, vault_rent)?;
+    }
 
     // Emit initialization event
     emit!(ConfigInitialized {

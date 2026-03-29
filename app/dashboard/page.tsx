@@ -1,7 +1,7 @@
 'use client';
 
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import dynamic from 'next/dynamic';
 import { Wallet, TrendingUp, Clock, Users, Target, Loader2 } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { StatCard } from '@/components/ui/StatCard';
@@ -12,9 +12,14 @@ import { CycleTimeline } from '@/components/game/CycleTimeline';
 import { LeaderboardPreview } from '@/components/game/LeaderboardPreview';
 import { CycleResolver } from '@/components/game/CycleResolver';
 import { ClaimButton } from '@/components/game/ClaimButton';
-import { ProtocolStatus } from '@/components/game/ProtocolStatus';
 import { usePlayerState, useGameState, usePlayerRank } from '@/lib/hooks';
 import { bnToSol } from '@/lib/anchor';
+
+// Import WalletMultiButton dynamically to avoid SSR issues
+const WalletMultiButton = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false }
+);
 
 export default function DashboardPage() {
   const { connected, publicKey } = useWallet();
@@ -68,9 +73,6 @@ export default function DashboardPage() {
           <p className="text-gray-400">Loading blockchain data...</p>
         </GlassPanel>
       )}
-
-      {/* Protocol Status */}
-      <ProtocolStatus />
 
       {/* Player Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

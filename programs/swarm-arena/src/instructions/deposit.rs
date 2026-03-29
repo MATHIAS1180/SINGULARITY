@@ -84,6 +84,9 @@ pub fn handler(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         .ok_or(SwarmArenaError::ArithmeticOverflow)?;
     player_state.last_action_slot = clock.slot;
 
+    // Save old exposed value BEFORE recalculation
+    let old_exposed_value = player_state.exposed_value;
+
     // Recalculate exposed value if player has exposure set
     if player_state.exposure > 0 {
         player_state.exposed_value = math::calculate_exposed_value(
@@ -99,13 +102,11 @@ pub fn handler(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         .ok_or(SwarmArenaError::ArithmeticOverflow)?;
 
     // Update global exposed value if player is participating
+    // Use the DIFFERENCE between new and old exposed values
     if player_state.participating_in_cycle && player_state.exposure > 0 {
-        let old_exposed = player_state.exposed_value
-            .checked_sub(amount)
-            .unwrap_or(0);
         let exposed_diff = player_state.exposed_value
-            .checked_sub(old_exposed)
-            .unwrap_or(0);
+            .checked_sub(old_exposed_value)
+            .ok_or(SwarmArenaError::ArithmeticUnderflow)?;
         
         game_state.total_exposed_value = game_state
             .total_exposed_value

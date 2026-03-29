@@ -4,13 +4,12 @@ import { useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, Loader2 } from 'lucide-react';
 import { GlassPanel } from '../ui/GlassPanel';
 import { ExposureSlider } from '../ui/ExposureSlider';
-import { useDeposit, useWithdraw, useSetExposure, usePlayerState, useRegisterPlayer, useProtocolInitialized } from '@/lib/hooks';
+import { useDeposit, useWithdraw, useSetExposure, usePlayerState, useRegisterPlayer } from '@/lib/hooks';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 export function PlayerActions() {
   const { connected } = useWallet();
   const { data: playerState } = usePlayerState();
-  const { data: isProtocolInitialized } = useProtocolInitialized();
   const registerMutation = useRegisterPlayer();
   const depositMutation = useDeposit();
   const withdrawMutation = useWithdraw();
@@ -23,10 +22,10 @@ export function PlayerActions() {
   const handleRegister = async () => {
     try {
       await registerMutation.mutateAsync();
-      alert('Player registered successfully!');
+      alert('✅ Player registered! Refreshing data...');
     } catch (error) {
       console.error('Registration failed:', error);
-      alert('Registration failed: ' + (error as Error).message);
+      alert('❌ Registration failed: ' + (error as Error).message);
     }
   };
 
@@ -40,10 +39,10 @@ export function PlayerActions() {
     try {
       await depositMutation.mutateAsync(amount);
       setDepositAmount('');
-      alert('Deposit successful!');
+      alert('✅ Deposit successful! Refreshing data...');
     } catch (error) {
       console.error('Deposit failed:', error);
-      alert('Deposit failed: ' + (error as Error).message);
+      alert('❌ Deposit failed: ' + (error as Error).message);
     }
   };
 
@@ -57,20 +56,20 @@ export function PlayerActions() {
     try {
       await withdrawMutation.mutateAsync(amount);
       setWithdrawAmount('');
-      alert('Withdrawal successful!');
+      alert('✅ Withdrawal successful! Refreshing data...');
     } catch (error) {
       console.error('Withdrawal failed:', error);
-      alert('Withdrawal failed: ' + (error as Error).message);
+      alert('❌ Withdrawal failed: ' + (error as Error).message);
     }
   };
 
   const handleSetExposure = async () => {
     try {
       await setExposureMutation.mutateAsync(exposure);
-      alert('Exposure updated successfully!');
+      alert('✅ Exposure updated! Refreshing data...');
     } catch (error) {
       console.error('Set exposure failed:', error);
-      alert('Set exposure failed: ' + (error as Error).message);
+      alert('❌ Set exposure failed: ' + (error as Error).message);
     }
   };
 
@@ -90,19 +89,10 @@ export function PlayerActions() {
           You need to register before you can deposit and play.
         </p>
         
-        {!isProtocolInitialized && (
-          <div className="p-3 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
-            <p className="text-xs text-yellow-400">
-              Protocol not initialized. Please wait for administrator to initialize.
-            </p>
-          </div>
-        )}
-        
         <button
           onClick={handleRegister}
-          disabled={registerMutation.isPending || !isProtocolInitialized}
+          disabled={registerMutation.isPending}
           className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          title={!isProtocolInitialized ? "Protocol must be initialized first" : ""}
         >
           {registerMutation.isPending ? (
             <>
