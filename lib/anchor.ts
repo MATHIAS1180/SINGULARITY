@@ -370,7 +370,7 @@ export async function fetchPlayerState(program: Program<SwarmArena>, playerPubke
 
 export async function fetchCycleState(program: Program<SwarmArena>, cycleNumber: number) {
   const [cycleStatePDA] = getCycleStatePDA(cycleNumber);
-  return program.account.CycleState.fetch(cycleStatePDA);
+  return program.account.cycleState.fetch(cycleStatePDA);
 }
 
 export async function isPlayerRegistered(program: Program<SwarmArena>, playerPubkey: PublicKey): Promise<boolean> {

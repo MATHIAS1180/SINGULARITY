@@ -37,7 +37,7 @@ export function useCycleHistory(limit: number = 10) {
       for (let i = Math.max(1, currentCycle - limit); i < currentCycle; i++) {
         try {
           const [cycleStatePDA] = await import('../solana').then(m => m.getCycleStatePDA(i));
-          const cycleState = await program.account.CycleState.fetch(cycleStatePDA);
+          const cycleState = await program.account.cycleState.fetch(cycleStatePDA);
 
           cycles.push({
             cycleNumber: cycleState.cycleNumber.toNumber(),

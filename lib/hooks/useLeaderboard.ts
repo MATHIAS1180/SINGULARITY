@@ -26,7 +26,7 @@ export function useLeaderboard(limit: number = 50) {
       if (!program) throw new Error('Program not initialized');
 
       // Fetch all PlayerState accounts
-      const players = await program.account.PlayerState.all();
+      const players = await program.account.playerState.all();
 
       // Sort by score descending
       const sorted = players.sort((a, b) => 
