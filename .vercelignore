@@ -24,3 +24,7 @@ target/deploy/
 target/.rustc_info.json
 node_modules/
 .next/
+
+# Scripts (not needed for production)
+scripts/
+calculate-pdas.js
