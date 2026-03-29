@@ -29,7 +29,7 @@ export function useActivityFeed(limit: number = 50) {
     const listeners: number[] = [];
 
     // Listen to DepositMade events
-    const depositListener = program.addEventListener('DepositMade', (event, slot) => {
+    const depositListener = program.addEventListener('DepositMade', (event: any, slot) => {
       setEvents(prev => [{
         id: `deposit-${slot}-${event.player.toString()}`,
         type: 'deposit' as ActivityEventType,
@@ -42,7 +42,7 @@ export function useActivityFeed(limit: number = 50) {
     listeners.push(depositListener);
 
     // Listen to WithdrawMade events
-    const withdrawListener = program.addEventListener('WithdrawMade', (event, slot) => {
+    const withdrawListener = program.addEventListener('WithdrawMade', (event: any, slot) => {
       setEvents(prev => [{
         id: `withdraw-${slot}-${event.player.toString()}`,
         type: 'withdrawal' as ActivityEventType,
@@ -55,7 +55,7 @@ export function useActivityFeed(limit: number = 50) {
     listeners.push(withdrawListener);
 
     // Listen to ExposureUpdated events
-    const exposureListener = program.addEventListener('ExposureUpdated', (event, slot) => {
+    const exposureListener = program.addEventListener('ExposureUpdated', (event: any, slot) => {
       setEvents(prev => [{
         id: `exposure-${slot}-${event.player.toString()}`,
         type: 'exposure' as ActivityEventType,
@@ -69,7 +69,7 @@ export function useActivityFeed(limit: number = 50) {
     listeners.push(exposureListener);
 
     // Listen to CycleResolved events
-    const cycleListener = program.addEventListener('CycleResolved', (event, slot) => {
+    const cycleListener = program.addEventListener('CycleResolved', (event: any, slot) => {
       setEvents(prev => [{
         id: `cycle-${slot}-${event.cycleNumber.toString()}`,
         type: 'cycle' as ActivityEventType,
@@ -83,7 +83,7 @@ export function useActivityFeed(limit: number = 50) {
     listeners.push(cycleListener);
 
     // Listen to RewardDistributed events
-    const rewardListener = program.addEventListener('RewardDistributed', (event, slot) => {
+    const rewardListener = program.addEventListener('RewardDistributed', (event: any, slot) => {
       const amount = event.redistributionAmount.toNumber() / 1e9;
       setEvents(prev => [{
         id: `reward-${slot}-${event.player.toString()}`,
@@ -98,7 +98,7 @@ export function useActivityFeed(limit: number = 50) {
     listeners.push(rewardListener);
 
     // Listen to FeeCollected events
-    const feeListener = program.addEventListener('FeeCollected', (event, slot) => {
+    const feeListener = program.addEventListener('FeeCollected', (event: any, slot) => {
       setEvents(prev => [{
         id: `fee-${slot}-${event.cycleNumber.toString()}`,
         type: 'fee' as ActivityEventType,
